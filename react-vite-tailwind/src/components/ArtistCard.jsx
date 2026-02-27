@@ -176,7 +176,11 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate('artist', { artist });
+                      if (artist._id || artist.id) {
+                        navigate(`/artist/${artist._id || artist.id}`);
+                      } else {
+                        navigate('artist', { artist });
+                      }
                     }}
                     className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
@@ -228,7 +232,13 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
   // Original card layout (grid)
   return (
     <div 
-      onClick={() => navigate('artist', { artist })}
+      onClick={() => {
+        if (artist._id || artist.id) {
+          navigate(`/artist/${artist._id || artist.id}`);
+        } else {
+          navigate('artist', { artist });
+        }
+      }}
       className="flex-shrink-0 w-64 lg:w-72 bg-white rounded-2xl overflow-hidden shadow-lg card-hover cursor-pointer"
     >
       <div className="relative" style={{ aspectRatio: '1/1.54' }}>

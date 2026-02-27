@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const AuthInput = ({ 
+const AuthInput = ({
   label,
   type = 'text',
   placeholder,
@@ -8,23 +8,19 @@ const AuthInput = ({
   onChange,
   error,
   showPasswordToggle = false,
+  onTogglePassword,
   className = '',
-  ...props 
+  ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [hasValue, setHasValue] = useState(false);
 
-  const inputType = type === 'password' && showPasswordToggle ? (showPassword ? 'text' : 'password') : type;
+  const inputType = type === 'text' && showPasswordToggle ? 'text' : type;
 
   const handleChange = (e) => {
     const hasVal = e.target.value.length > 0;
     setHasValue(hasVal);
     onChange(e);
-  };
-
-  const togglePassword = () => {
-    setShowPassword(!showPassword);
   };
 
   return (
@@ -47,7 +43,7 @@ const AuthInput = ({
         `}
         {...props}
       />
-      
+
       <label className={`
         absolute left-4 transition-all duration-300 pointer-events-none bg-white px-1
         ${hasValue || isFocused ? '-top-3 text-sm text-brand-500' : 'top-3.5 text-gray-500'}
@@ -56,13 +52,13 @@ const AuthInput = ({
         {label}
       </label>
 
-      {showPasswordToggle && type === 'password' && (
+      {showPasswordToggle && (
         <button
           type="button"
-          onClick={togglePassword}
+          onClick={onTogglePassword}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-600 transition-colors"
         >
-          {showPassword ? (
+          {type === 'text' ? (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.629l5.844 5.844zM12 15.75a3.75 3.75 0 013.75-3.75 3.75 3.75 0 00-3.75 3.75z" />
             </svg>

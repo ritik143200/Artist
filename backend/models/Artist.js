@@ -43,7 +43,7 @@ const artistSchema = new mongoose.Schema({
     enum: ['artist'],
     default: 'artist'
   },
-  
+
   // Professional Information
   artistType: {
     type: String,
@@ -82,7 +82,7 @@ const artistSchema = new mongoose.Schema({
     required: false,
     default: 0
   },
-  
+
   // Portfolio & Social
   profileImage: {
     type: String,
@@ -110,7 +110,7 @@ const artistSchema = new mongoose.Schema({
       default: ''
     }
   },
-  
+
   // Verification
   idProof: {
     type: String, // File URL
@@ -122,7 +122,7 @@ const artistSchema = new mongoose.Schema({
     enum: ['pending', 'verified', 'rejected'],
     default: 'pending'
   },
-  
+
   // System Fields
   registrationDate: {
     type: Date,
@@ -149,7 +149,9 @@ const artistSchema = new mongoose.Schema({
       type: Number,
       default: 0
     }
-  }
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }, {
   timestamps: true
 });
@@ -161,7 +163,7 @@ artistSchema.index({ location: 1 });
 artistSchema.index({ verificationStatus: 1 });
 
 // Virtual for full name
-artistSchema.virtual('fullName').get(function() {
+artistSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
@@ -170,7 +172,7 @@ artistSchema.set('toJSON', { virtuals: true });
 artistSchema.set('toObject', { virtuals: true });
 
 // Pre-save middleware to update lastUpdated
-artistSchema.pre('save', function(next) {
+artistSchema.pre('save', function (next) {
   this.lastUpdated = new Date();
   next();
 });

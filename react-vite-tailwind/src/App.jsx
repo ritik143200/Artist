@@ -46,7 +46,7 @@ const AppContent = ({ config }) => {
   const { currentPath } = useRouter();
 
   // Auth pages don't show navbar
-  const isAuthPage = currentPath === 'auth' || currentPath === 'artist-registration';
+  const isAuthPage = currentPath === 'auth' || currentPath === 'artist-registration' || currentPath === 'reset-password';
 
   return (
     <div 
@@ -57,7 +57,7 @@ const AppContent = ({ config }) => {
       }}
     >
       {!isAuthPage && <Navbar config={config} />}
-      {currentPath === 'auth' && <AuthPage />}
+      {(currentPath === 'auth' || currentPath === 'reset-password') && <AuthPage />}
       {currentPath === 'artist-registration' && <ArtistRegistrationPage config={config} />}
       {currentPath === 'about' && <AboutPage config={config} />}
       {currentPath === 'services' && <ServicesPage config={config} />}

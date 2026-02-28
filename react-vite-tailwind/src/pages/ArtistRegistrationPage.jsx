@@ -29,7 +29,8 @@ const ArtistRegistrationPage = ({ config }) => {
     skills: [],
     bio: '',
     location: '',
-    budget: '',
+    budgetMin: '',
+    budgetMax: '',
     
     // Step 4: Portfolio & Verification
     portfolio: [],
@@ -622,7 +623,7 @@ const ArtistRegistrationPage = ({ config }) => {
         }
       });
       
-      const response = await fetch('http://localhost:5001/api/artists/register', {
+      const response = await fetch('http://localhost:5001/api/artist/register', {
         method: 'POST',
         body: formDataToSend
       });
@@ -888,23 +889,45 @@ const ArtistRegistrationPage = ({ config }) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Expected Budget/Pricing (₹)</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 text-sm">₹</span>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Expected Budget Range (₹)</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Starting From</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 text-sm">₹</span>
+                </div>
+                <input
+                  type="number"
+                  value={formData.budgetMin}
+                  onChange={(e) => handleInputChange('budgetMin', e.target.value)}
+                  className="w-full px-4 py-3 pl-8 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                  placeholder="Starting amount"
+                  min="0"
+                  step="1000"
+                />
+              </div>
             </div>
-            <input
-              type="number"
-              value={formData.budget}
-              onChange={(e) => handleInputChange('budget', e.target.value)}
-              className="w-full px-4 py-3 pl-8 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
-              placeholder="Enter your expected budget per event/performance"
-              min="0"
-              step="1000"
-            />
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Upto</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 text-sm">₹</span>
+                </div>
+                <input
+                  type="number"
+                  value={formData.budgetMax}
+                  onChange={(e) => handleInputChange('budgetMax', e.target.value)}
+                  className="w-full px-4 py-3 pl-8 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                  placeholder="Maximum amount"
+                  min="0"
+                  step="1000"
+                />
+              </div>
+            </div>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Enter your expected budget for performances, events, or services
+            Enter your budget range for performances, events, or services (e.g., Starting from ₹15,000 to ₹50,000)
           </p>
         </div>
       </div>

@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
     
     // Fetch artists from MongoDB
     const artists = await Artist.find(query)
-      .select('name category subcategory skills bio profileImage rating experience location verified isActive firstName lastName')
+      .select('name category subcategory skills bio profileImage rating experience location verified isActive firstName lastName budget budgetMin budgetMax')
       .sort({ rating: -1, createdAt: -1 })
       .limit(50);
     

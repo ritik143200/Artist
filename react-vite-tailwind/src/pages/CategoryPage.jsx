@@ -3,17 +3,56 @@ import { useRouter } from '../contexts/RouterContext';
 import { artists } from '../data/mockData';
 import ArtistCard from '../components/ArtistCard';
 
-// Categories data
+// Categories data - Same as Artist Registration Page
 const allCategoriesData = {
   singers: {
     name: 'Singers',
     icon: '🎤',
     color: 'from-purple-500 to-pink-600',
     subcategories: {
-      classical: { name: 'Classical', icon: '🎵', items: ['Hindustani', 'Carnatic', 'Bhajan', 'Ghazal', 'Shabad'] },
-      bollywood: { name: 'Bollywood', icon: '🎬', items: ['Playback', 'Sufi', 'Romantic', 'Item Numbers', 'Folk'] },
-      western: { name: 'Western', icon: '🎸', items: ['Pop', 'Rock', 'Jazz', 'Blues', 'Country'] },
-      devotional: { name: 'Devotional', icon: '🙏', items: ['Bhajan', 'Kirtan', 'Aarti', 'Chalisa', 'Mantra'] }
+      western: { name: 'Western', icon: '🎸', items: ['Jazz', 'Blues', 'Opera', 'Pop', 'Country', 'Gospel'] },
+      bollywood: { name: 'Bollywood', icon: '🎬', items: ['Playback', 'Cover', 'Mashup'] },
+      folk: { name: 'Folk', icon: '🪘', items: ['Rajasthani', 'Punjabi', 'Bhojpuri', 'Malwi', 'Lavani', 'Baul', 'Tribal'] },
+      devotional: { name: 'Devotional', icon: '🙏', items: ['Bhajan', 'Kirtan', 'Gurbani', 'Aarti'] },
+      modern: { name: 'Modern', icon: '🎧', items: ['Indie', 'Rap', 'Hip-Hop', 'EDM Vocalists'] },
+      classical: { name: 'Classical', icon: '🎵', items: ['Hindustani', 'Carnatic', 'Ghazal', 'Sufi', 'Qawwali'] }
+    }
+  },
+  anchors: {
+    name: 'Anchors',
+    icon: '🎤',
+    color: 'from-blue-500 to-cyan-600',
+    subcategories: {
+      wedding: { name: 'Wedding Anchors', icon: '💒', items: ['Wedding Anchors', 'Event Anchors', 'Ceremony Anchors'] },
+      corporate: { name: 'Corporate Anchors', icon: '🏢', items: ['Corporate Anchors', 'Business Anchors', 'Conference Anchors'] },
+      government: { name: 'Government Event Anchors', icon: '🏛️', items: ['Government Anchors', 'Official Event Anchors', 'Public Service Anchors'] },
+      festival: { name: 'Festival / Public Anchors', icon: '🎉', items: ['Festival Anchors', 'Public Event Anchors', 'Community Anchors'] }
+    }
+  },
+  bands: {
+    name: 'Bands',
+    icon: '🎸',
+    color: 'from-indigo-500 to-purple-600',
+    subcategories: {
+      classical: { name: 'Classical', icon: '🎵', items: ['Hindustani', 'Carnatic', 'Ghazal', 'Sufi', 'Qawwali'] },
+      devotional: { name: 'Devotional', icon: '🙏', items: ['Bhajan', 'Kirtan', 'Gurbani', 'Aarti'] },
+      bollywood: { name: 'Bollywood Bands', icon: '🎬', items: ['Bollywood Bands', 'Film Bands', 'Music Bands'] },
+      folk: { name: 'Folk Bands', icon: '🪘', items: ['Folk Bands', 'Traditional Bands', 'Cultural Bands'] },
+      western: { name: 'Western Bands', icon: '🎸', items: ['Rock Bands', 'Pop Bands', 'Jazz Bands'] },
+      modern: { name: 'Modern Bands', icon: '🎧', items: ['Indie', 'Rap', 'Hip-Hop', 'EDM'] },
+      rock: { name: 'Rock / Metal / Fusion Bands', icon: '🎸', items: ['Rock Bands', 'Metal Bands', 'Fusion Bands'] },
+      wedding: { name: 'Wedding & College Bands', icon: '💒', items: ['Wedding Bands', 'College Bands', 'Event Bands'] },
+      acoustic: { name: 'Acoustic / EDM / Techno Groups', icon: '🎵', items: ['Acoustic Groups', 'EDM Groups', 'Techno Groups'] }
+    }
+  },
+  instrumentalists: {
+    name: 'Instrumentalists',
+    icon: '🎼',
+    color: 'from-green-500 to-emerald-600',
+    subcategories: {
+      indian_classical: { name: 'Indian Classical', icon: '🎵', items: ['Flute', 'Sitar', 'Tabla', 'Veena', 'Harmonium'] },
+      western: { name: 'Western', icon: '🎸', items: ['Guitar', 'Piano', 'Violin', 'Saxophone', 'Drums'] },
+      fusion: { name: 'Fusion', icon: '🎵', items: ['Handpan', 'Cajón', 'Loop Station', 'Beatboxing'] }
     }
   },
   dancers: {
@@ -22,29 +61,46 @@ const allCategoriesData = {
     color: 'from-pink-500 to-rose-600',
     subcategories: {
       classical: { name: 'Classical', icon: '🎭', items: ['Bharatanatyam', 'Kathak', 'Odissi', 'Kuchipudi', 'Manipuri'] },
-      bollywood: { name: 'Bollywood', icon: '🎬', items: ['Bollywood', 'Contemporary', 'Fusion', 'Item Numbers'] },
-      folk: { name: 'Folk', icon: '🪘', items: ['Bhangra', 'Garba', 'Ghoomar', 'Lavani', 'Bihu'] },
-      western: { name: 'Western', icon: '🎭', items: ['Hip-Hop', 'Contemporary', 'Jazz', 'Ballet', 'Salsa'] }
+      folk: { name: 'Folk', icon: '🪘', items: ['Bhangra', 'Garba', 'Ghoomar', 'Lavani', 'Baul'] },
+      western: { name: 'Western', icon: '💃', items: ['Salsa', 'Tango', 'Ballroom', 'Swing'] },
+      street: { name: 'Street', icon: '🕺', items: ['Hip-Hop', 'B-Boying', 'Krumping', 'Waacking'] },
+      contemporary: { name: 'Contemporary', icon: '🩰', items: ['Ballet', 'Jazz Fusion', 'Modern Dance'] },
+      specialty: { name: 'Specialty', icon: '🔥', items: ['Belly Dance', 'Aerial', 'Fire Dance', 'LED Dance'] }
     }
   },
-  musicians: {
-    name: 'Musicians',
-    icon: '🎵',
-    color: 'from-indigo-500 to-purple-600',
+  choreographers: {
+    name: 'Choreographers',
+    icon: '🕺',
+    color: 'from-purple-500 to-pink-600',
     subcategories: {
-      instrumental: { name: 'Instrumental', icon: '🎸', items: ['Guitar', 'Piano', 'Violin', 'Flute', 'Drums'] },
-      classical: { name: 'Classical', icon: '🎻', items: ['Sitar', 'Tabla', 'Harmonium', 'Sarod', 'Santoor'] },
-      western: { name: 'Western', icon: '🎺', items: ['Guitar', 'Piano', 'Drums', 'Bass', 'Saxophone'] }
+      bollywood: { name: 'Bollywood / Film', icon: '🎬', items: ['Film Choreographers', 'Bollywood Choreographers', 'Music Video'] },
+      wedding: { name: 'Wedding', icon: '💒', items: ['Wedding Choreographers', 'Sangeet Choreographers'] },
+      reality: { name: 'Reality Shows', icon: '📺', items: ['Reality Show Choreographers', 'TV Show Choreographers'] },
+      school: { name: 'School / College Events', icon: '🏫', items: ['School Choreographers', 'College Event Choreographers'] },
+      fitness: { name: 'Fitness Dance', icon: '💪', items: ['Zumba', 'BollyFit', 'Dance Fitness'] },
+      corporate: { name: 'Corporate Flashmob', icon: '🏢', items: ['Corporate Choreographers', 'Flashmob Organizers'] }
     }
   },
-  photographers: {
-    name: 'Photographers',
-    icon: '📸',
-    color: 'from-blue-500 to-cyan-600',
+  cultural_artists: {
+    name: 'Cultural Artists',
+    icon: '🎭',
+    color: 'from-orange-500 to-red-600',
     subcategories: {
-      wedding: { name: 'Wedding', icon: '💒', items: ['Traditional', 'Candid', 'Pre-Wedding', 'Destination', 'Cinematic'] },
-      portrait: { name: 'Portrait', icon: '👤', items: ['Professional', 'Family', 'Maternity', 'Newborn', 'Corporate'] },
-  commercial: { name: 'Commercial', icon: '📷', items: ['Product', 'Fashion', 'Food', 'Architecture', 'Event'] }
+      traditional: { name: 'Traditional', icon: '🪘', items: ['Lavani', 'Nautanki', 'Tamasha'] },
+      puppetry: { name: 'Puppetry', icon: '🎭', items: ['Glove Puppets', 'Shadow Puppets', 'String Puppets'] },
+      tribal: { name: 'Tribal Artists', icon: '👤', items: ['Baiga', 'Gond', 'Bhil', 'Tribal Art'] },
+      martial: { name: 'Martial Folk Arts', icon: '🥋', items: ['Martial Arts', 'Fighting Arts', 'Combat Sports'] }
+    }
+  },
+  carnival_artists: {
+    name: 'Carnival Artists',
+    icon: '🎪',
+    color: 'from-yellow-500 to-orange-600',
+    subcategories: {
+      performance: { name: 'Performance', icon: '🎭', items: ['Stilt Walkers', 'Jugglers', 'Fire Performers'] },
+      visual: { name: 'Visual', icon: '👤', items: ['Human Statues', 'Mime', 'Living Statues'] },
+      comedy: { name: 'Comedy', icon: '😄', items: ['Clowns', 'Balloon Artists', 'Comedy Acts'] },
+      acrobatic: { name: 'Acrobatic', icon: '🤸', items: ['Acrobats', 'Rope Walkers', 'Trapeze Artists'] }
     }
   },
   makeup_artists: {
@@ -52,28 +108,222 @@ const allCategoriesData = {
     icon: '💄',
     color: 'from-pink-500 to-rose-600',
     subcategories: {
-      bridal: { name: 'Bridal', icon: '👰', items: ['Traditional', 'Modern', 'HD', 'Airbrush', '3D'] },
-      fashion: { name: 'Fashion', icon: '✨', items: ['Editorial', 'Runway', 'Commercial', 'Creative', 'Avant-Garde'] },
-      special: { name: 'Special Effects', icon: '🎭', items: ['SFX', 'Prosthetic', 'Fantasy', 'Horror', 'Sci-Fi'] }
+      bridal: { name: 'Bridal', icon: '💒', items: ['Bridal Makeup', 'Wedding Makeup', 'Traditional Bridal'] },
+      fashion: { name: 'Fashion', icon: '👗', items: ['Fashion Makeup', 'Runway Makeup', 'Editorial Makeup'] },
+      celebrity: { name: 'Celebrity', icon: '⭐', items: ['Celebrity Makeup', 'Red Carpet Makeup', 'TV Makeup'] },
+      theatre: { name: 'Theatre / Film', icon: '🎬', items: ['Theatre Makeup', 'Film Makeup', 'Special Effects'] },
+      sfx: { name: 'SFX', icon: '🎭', items: ['Special Effects', 'Prosthetic Makeup', 'Creature Makeup'] },
+      hair: { name: 'Hair Stylists', icon: '💇', items: ['Hair Stylists', 'Hair Artists', 'Hair Designers'] }
     }
   },
-  decorators: {
-    name: 'Decorators',
-    icon: '🎨',
-    color: 'from-amber-500 to-orange-600',
-    subcategories: {
-      wedding: { name: 'Wedding', icon: '💒', items: ['Mandap', 'Reception', 'Sangeet', 'Mehendi', 'Engagement'] },
-      event: { name: 'Event', icon: '🎉', items: ['Corporate', 'Birthday', 'Anniversary', 'Theme', 'Festival'] },
-      home: { name: 'Home', icon: '🏠', items: ['Living Room', 'Bedroom', 'Kitchen', 'Office', 'Garden'] }
-    }
-  },
-  mehendi_artists: {
-    name: 'Mehendi Artists',
-    icon: '🌿',
+  fitness_artists: {
+    name: 'Fitness Artists',
+    icon: '🏋️',
     color: 'from-green-500 to-emerald-600',
     subcategories: {
-      traditional: { name: 'Traditional', icon: '🪷', items: ['Indian', 'Arabic', 'Rajasthani', 'Marwari', 'Pakistani'] },
-      modern: { name: 'Modern', icon: '✨', items: ['Contemporary', 'Fusion', 'Minimalist', 'Geometric', 'Abstract'] }
+      zumba: { name: 'Zumba', icon: '💃', items: ['Zumba', 'Dance Fitness', 'Aerobics'] },
+      yoga: { name: 'Yoga', icon: '🧘', items: ['Yoga', 'Meditation', 'Wellness'] },
+      martial: { name: 'Martial Arts', icon: '🥋', items: ['Martial Arts', 'Karate', 'Taekwondo'] },
+      pole: { name: 'Pole Fitness', icon: '🕺', items: ['Pole Dance', 'Pole Fitness', 'Aerial Fitness'] }
+    }
+  },
+  painters: {
+    name: 'Painters',
+    icon: '🎨',
+    color: 'from-blue-500 to-purple-600',
+    subcategories: {
+      traditional: { name: 'Traditional', icon: '🖼️', items: ['Oil', 'Watercolor', 'Acrylic'] },
+      style: { name: 'Style', icon: '🎨', items: ['Realism', 'Abstract', 'Hyperrealism'] },
+      modern: { name: 'Modern', icon: '🎨', items: ['Street', 'Graffiti', 'Digital', 'Mural'] }
+    }
+  },
+  sketch_artists: {
+    name: 'Sketch Artists',
+    icon: '✏️',
+    color: 'from-gray-500 to-gray-600',
+    subcategories: {
+      traditional: { name: 'Traditional', icon: '✏️', items: ['Pencil', 'Charcoal', 'Ink'] },
+      creative: { name: 'Creative', icon: '🎨', items: ['Caricature', 'Comic', 'Anime'] },
+      body: { name: 'Body Art', icon: '🎭', items: ['Tattoo Art', 'Body Painting', 'Henna'] },
+      digital: { name: 'Digital', icon: '💻', items: ['Digital Art', '3D Art', 'NFT Art'] }
+    }
+  },
+  rjs: {
+    name: 'RJs',
+    icon: '🎙️',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      fm: { name: 'FM RJs', icon: '📻', items: ['FM Radio', 'Music Radio', 'Entertainment Radio'] },
+      digital: { name: 'Digital RJs', icon: '💻', items: ['Online Radio', 'Podcast Radio', 'Digital Radio'] },
+      event: { name: 'Event RJs', icon: '🎤', items: ['Event RJs', 'Live Event Radio', 'Show RJs'] },
+      storytelling: { name: 'Storytelling RJs', icon: '📖', items: ['Storytelling', 'Narrative Radio', 'Audio Stories'] }
+    }
+  },
+  voice_artists: {
+    name: 'Voice Artists',
+    icon: '🎧',
+    color: 'from-indigo-500 to-purple-600',
+    subcategories: {
+      commercial: { name: 'Ads / Commercial', icon: '📺', items: ['Commercial Voice', 'Advertisement Voice', 'Jingle Voice'] },
+      dubbing: { name: 'Dubbing', icon: '🎬', items: ['Film Dubbing', 'OTT Dubbing', 'Animation Dubbing'] },
+      animation: { name: 'Animation Voices', icon: '🎭', items: ['Cartoon Voices', 'Animation Voice', 'Character Voice'] },
+      audiobook: { name: 'Audiobooks / Podcast', icon: '🎧', items: ['Audiobook Narration', 'Podcast Hosting', 'Voice Acting'] },
+      corporate: { name: 'IVR / Corporate', icon: '🏢', items: ['IVR Voice', 'Corporate Voice', 'Training Voice'] }
+    }
+  },
+  writers: {
+    name: 'Writers',
+    icon: '✍️',
+    color: 'from-blue-500 to-gray-600',
+    subcategories: {
+      poetry: { name: 'Poets', icon: '📜', items: ['Poets', 'Shayars', 'Poetry Writers'] },
+      storytelling: { name: 'Storytellers', icon: '📖', items: ['Storytellers', 'Fiction Writers', 'Narrative Writers'] },
+      script: { name: 'Script Writers', icon: '🎬', items: ['Script Writers', 'Screenplay Writers', 'Dialogue Writers'] },
+      lyric: { name: 'Lyricists', icon: '🎵', items: ['Lyricists', 'Song Writers', 'Music Writers'] },
+      content: { name: 'Content Writers', icon: '📝', items: ['Content Writers', 'Blog Writers', 'Copy Writers'] }
+    }
+  },
+  djs: {
+    name: 'DJs',
+    icon: '🎧',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      wedding: { name: 'Wedding DJs', icon: '💒', items: ['Wedding DJs', 'Event DJs', 'Party DJs'] },
+      club: { name: 'Club DJs', icon: '🎵', items: ['Club DJs', 'Nightclub DJs', 'Bar DJs'] },
+      edm: { name: 'EDM / Techno', icon: '🎧', items: ['EDM DJs', 'Techno DJs', 'Electronic DJs'] },
+      bollywood: { name: 'Bollywood DJs', icon: '🎬', items: ['Bollywood DJs', 'Desi DJs', 'Indian Music DJs'] },
+      fusion: { name: 'DJ + Instrument Fusion', icon: '🎸', items: ['Live DJ', 'DJ Musicians', 'Instrument Fusion'] }
+    }
+  },
+  wellness_artists: {
+    name: 'Wellness Artists',
+    icon: '🧘',
+    color: 'from-green-500 to-emerald-600',
+    subcategories: {
+      meditation: { name: 'Meditation', icon: '🧘', items: ['Meditation', 'Mantra', 'Mindfulness'] },
+      healing: { name: 'Sound Healing', icon: '🎵', items: ['Sound Healing', 'Music Therapy', 'Vibrational Healing'] },
+      reiki: { name: 'Reiki Healing', icon: '✋', items: ['Reiki', 'Energy Healing', 'Spiritual Healing'] },
+      spiritual: { name: 'Spiritual Storytelling', icon: '📖', items: ['Spiritual Storytelling', 'Motivational Speaking', 'Inspirational Talks'] }
+    }
+  },
+  fashion_artists: {
+    name: 'Fashion Artists',
+    icon: '👗',
+    color: 'from-pink-500 to-rose-600',
+    subcategories: {
+      design: { name: 'Fashion Designers', icon: '👗', items: ['Fashion Designers', 'Clothing Designers', 'Apparel Designers'] },
+      costume: { name: 'Costume Designers', icon: '🎭', items: ['Costume Designers', 'Theatre Costumes', 'Film Costumes'] },
+      styling: { name: 'Stylists', icon: '💇', items: ['Fashion Stylists', 'Personal Stylists', 'Wardrobe Stylists'] },
+      jewelry: { name: 'Jewellery Designers', icon: '💍', items: ['Jewellery Designers', 'Accessory Designers', 'Ornament Designers'] }
+    }
+  },
+  culinary_artists: {
+    name: 'Culinary Artists',
+    icon: '🍰',
+    color: 'from-orange-500 to-red-600',
+    subcategories: {
+      cake: { name: 'Cake Artists', icon: '🎂', items: ['Cake Artists', 'Cake Designers', 'Pastry Chefs'] },
+      chocolate: { name: 'Chocolate Artists', icon: '🍫', items: ['Chocolate Artists', 'Chocolatiers', 'Confectionery'] },
+      carving: { name: 'Food Carving', icon: '🔪', items: ['Food Carving', 'Fruit Carving', 'Ice Carving'] }
+    }
+  },
+  children_artists: {
+    name: 'Children Artists',
+    icon: '🧸',
+    color: 'from-yellow-500 to-orange-600',
+    subcategories: {
+      entertainment: { name: 'Kids Entertainers', icon: '🤡', items: ['Kids Entertainers', 'Children Shows', 'Kids Parties'] },
+      puppet: { name: 'Puppet Shows', icon: '🎭', items: ['Puppet Shows', 'Puppeteers', 'Marionette Shows'] },
+      magic: { name: 'Magic Shows', icon: '🎩', items: ['Magic Shows', 'Kids Magic', 'Family Magic'] },
+      storytelling: { name: 'Storytelling', icon: '📖', items: ['Storytelling', 'Kids Stories', 'Educational Stories'] },
+      diy: { name: 'DIY Workshops', icon: '🛠️', items: ['DIY Workshops', 'Craft Workshops', 'Kids Activities'] }
+    }
+  },
+  special_artists: {
+    name: 'Special Artists',
+    icon: '🌟',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      traditional: { name: 'Traditional', icon: '🎨', items: ['Rangoli', 'Mehendi', 'Henna Art'] },
+      sand: { name: 'Sand Art', icon: '🏖️', items: ['Sand Art', 'Sand Sculptures', 'Beach Art'] },
+      calligraphy: { name: 'Calligraphy', icon: '✍️', items: ['Calligraphy', 'Hand Lettering', 'Typography'] },
+      ice: { name: 'Ice Sculptors', icon: '🧊', items: ['Ice Sculptors', 'Ice Carving', 'Ice Art'] }
+    }
+  },
+  visual_tech_artists: {
+    name: 'Visual Tech Artists',
+    icon: '💡',
+    color: 'from-blue-500 to-purple-600',
+    subcategories: {
+      laser: { name: 'Laser Shows', icon: '🔴', items: ['Laser Shows', 'Light Shows', 'Visual Effects'] },
+      hologram: { name: 'Hologram Shows', icon: '👤', items: ['Hologram Shows', '3D Shows', 'Projection Shows'] },
+      led: { name: 'LED Performers', icon: '💡', items: ['LED Performers', 'Light Artists', 'Visual Artists'] },
+      mapping: { name: 'Video Mapping', icon: '📹', items: ['Video Mapping', 'Projection Mapping', 'Visual Mapping'] }
+    }
+  },
+  circus_artists: {
+    name: 'Circus Artists',
+    icon: '🎪',
+    color: 'from-red-500 to-orange-600',
+    subcategories: {
+      aerial: { name: 'Aerial', icon: '🎪', items: ['Trapeze', 'Aerial Silks', 'Aerial Hoop'] },
+      fire: { name: 'Fire', icon: '🔥', items: ['Fire Breathers', 'Fire Eaters', 'Fire Performers'] },
+      knife: { name: 'Knife', icon: '🔪', items: ['Knife Throwers', 'Knife Jugglers', 'Blade Artists'] },
+      contortion: { name: 'Contortionists', icon: '🤸', items: ['Contortionists', 'Flexibility Artists', 'Body Artists'] }
+    }
+  },
+  actors: {
+    name: 'Actors',
+    icon: '🎬',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      theatre: { name: 'Theatre', icon: '🎭', items: ['Theatre Actors', 'Stage Actors', 'Live Theatre'] },
+      film: { name: 'Film / TV', icon: '📺', items: ['Film Actors', 'TV Actors', 'Web Series'] },
+      voice: { name: 'Voice Acting', icon: '🎤', items: ['Voice Acting', 'Dubbing Artists', 'Animation Voice'] }
+    }
+  },
+  magicians: {
+    name: 'Magicians',
+    icon: '🎩',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      stage: { name: 'Stage Magic', icon: '🎭', items: ['Stage Magicians', 'Live Magic', 'Performance Magic'] },
+      illusion: { name: 'Illusionists', icon: '👁️', items: ['Illusionists', 'Mind Readers', 'Mentalists'] },
+      kids: { name: 'Kids Magicians', icon: '🤡', items: ['Kids Magicians', 'Family Magic', 'Children Magic'] }
+    }
+  },
+  digital_artists: {
+    name: 'Digital Artists',
+    icon: '💻',
+    color: 'from-blue-500 to-purple-600',
+    subcategories: {
+      nft: { name: 'NFT Artists', icon: '🎨', items: ['NFT Artists', 'Crypto Art', 'Digital Collectibles'] },
+      ar_vr: { name: 'AR/VR Artists', icon: '🥽', items: ['AR Artists', 'VR Artists', 'Mixed Reality'] },
+      drone: { name: 'Drone Shows', icon: '🚁', items: ['Drone Shows', 'Aerial Photography', 'Drone Art'] },
+      installation: { name: 'Installation Artists', icon: '🎨', items: ['Installation Artists', '3D Installations', 'Interactive Art'] }
+    }
+  },
+  musicians: {
+    name: 'Musicians',
+    icon: '🎸',
+    color: 'from-indigo-500 to-purple-600',
+    subcategories: {
+      classical: { name: 'Classical Musicians', icon: '🎵', items: ['Classical Guitar', 'Classical Piano', 'Classical Violin', 'Classical Flute'] },
+      modern: { name: 'Modern Musicians', icon: '🎸', items: ['Rock Guitar', 'Pop Piano', 'Jazz Saxophone', 'Electronic Keyboard'] },
+      traditional: { name: 'Traditional Musicians', icon: '🪘', items: ['Dholak', 'Tabla', 'Sitar', 'Flute', 'Harmonium'] },
+      session: { name: 'Session Musicians', icon: '🎵', items: ['Studio Musicians', 'Live Session Players', 'Recording Artists'] }
+    }
+  },
+  photographers: {
+    name: 'Photographers',
+    icon: '📷',
+    color: 'from-blue-500 to-cyan-600',
+    subcategories: {
+      wedding: { name: 'Wedding Photography', icon: '💒', items: ['Wedding Shoots', 'Pre-Wedding', 'Candid Wedding', 'Traditional Wedding'] },
+      fashion: { name: 'Fashion Photography', icon: '👗', items: ['Fashion Shoots', 'Portfolio', 'Magazine', 'Runway'] },
+      product: { name: 'Product Photography', icon: '📦', items: ['E-commerce', 'Product Catalogs', 'Food Photography', 'Still Life'] },
+      portrait: { name: 'Portrait Photography', icon: '👤', items: ['Studio Portraits', 'Outdoor Portraits', 'Corporate Headshots', 'Family Portraits'] },
+      event: { name: 'Event Photography', icon: '🎉', items: ['Corporate Events', 'Birthday Parties', 'Concerts', 'Festivals'] }
     }
   },
   videographers: {
@@ -81,8 +331,142 @@ const allCategoriesData = {
     icon: '🎥',
     color: 'from-red-500 to-pink-600',
     subcategories: {
-      wedding: { name: 'Wedding', icon: '💒', items: ['Cinematic', 'Traditional', 'Drone', 'Highlight', 'Documentary'] },
-      commercial: { name: 'Commercial', icon: '📹', items: ['Corporate', 'Advertisement', 'Product', 'Music Video', 'Documentary'] }
+      wedding: { name: 'Wedding Videography', icon: '💒', items: ['Wedding Films', 'Cinematic Wedding', 'Traditional Wedding', 'Highlight Reels'] },
+      corporate: { name: 'Corporate Videography', icon: '🏢', items: ['Corporate Films', 'Training Videos', 'Promotional Videos', 'Event Coverage'] },
+      music: { name: 'Music Videos', icon: '🎵', items: ['Music Video Production', 'Live Performance', 'Behind the Scenes', 'Teaser Videos'] },
+      documentary: { name: 'Documentary', icon: '📹', items: ['Documentary Films', 'Short Films', 'Travel Videos', 'Storytelling'] }
+    }
+  },
+  hair_stylists: {
+    name: 'Hair Stylists',
+    icon: '💇',
+    color: 'from-pink-500 to-rose-600',
+    subcategories: {
+      bridal: { name: 'Bridal Hair', icon: '💒', items: ['Bridal Hairstyles', 'Wedding Hair', 'Traditional Bridal', 'Modern Bridal'] },
+      fashion: { name: 'Fashion Hair', icon: '👗', items: ['Runway Hair', 'Fashion Shoots', 'Editorial Hair', 'Avant Garde'] },
+      salon: { name: 'Salon Services', icon: '💇', items: ['Haircuts', 'Hair Coloring', 'Hair Treatments', 'Hair Styling'] },
+      creative: { name: 'Creative Hair', icon: '🎨', items: ['Creative Color', 'Hair Art', 'Special Effects Hair', 'Fantasy Hair'] }
+    }
+  },
+  comedians: {
+    name: 'Comedians',
+    icon: '😄',
+    color: 'from-yellow-500 to-orange-600',
+    subcategories: {
+      standup: { name: 'Stand-up Comedy', icon: '🎤', items: ['Stand-up Comedy', 'Open Mic', 'Comedy Clubs', 'Comedy Specials'] },
+      sketch: { name: 'Sketch Comedy', icon: '📺', items: ['Sketch Shows', 'Comedy Series', 'Web Series', 'Short Films'] },
+      improv: { name: 'Improvisation', icon: '🎭', items: ['Improv Comedy', 'Improv Shows', 'Spontaneous Comedy', 'Interactive Comedy'] },
+      digital: { name: 'Digital Comedy', icon: '📱', items: ['Social Media Comedy', 'Memes', 'Short Videos', 'Online Content'] }
+    }
+  },
+  models: {
+    name: 'Models',
+    icon: '👤',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      fashion: { name: 'Fashion Modeling', icon: '👗', items: ['Runway Models', 'Fashion Shows', 'Magazine Covers', 'Fashion Campaigns'] },
+      commercial: { name: 'Commercial Modeling', icon: '📺', items: ['TV Commercials', 'Print Ads', 'Brand Ambassador', 'Product Modeling'] },
+      fitness: { name: 'Fitness Modeling', icon: '💪', items: ['Fitness Models', 'Athletic Wear', 'Gym Brands', 'Health Products'] },
+      plus_size: { name: 'Plus Size Modeling', icon: '🌟', items: ['Plus Size Fashion', 'Body Positivity', 'Inclusive Brands', 'Plus Size Campaigns'] }
+    }
+  },
+  fashion_designers: {
+    name: 'Fashion Designers',
+    icon: '👗',
+    color: 'from-pink-500 to-rose-600',
+    subcategories: {
+      bridal: { name: 'Bridal Wear', icon: '💒', items: ['Wedding Dresses', 'Bridal Collections', 'Traditional Bridal', 'Modern Bridal'] },
+      casual: { name: 'Casual Wear', icon: '👕', items: ['Daily Wear', 'Street Style', 'Casual Collections', 'Ready to Wear'] },
+      ethnic: { name: 'Ethnic Wear', icon: '🪘', items: ['Traditional Wear', 'Cultural Outfits', 'Fusion Wear', 'Regional Styles'] },
+      luxury: { name: 'Luxury Fashion', icon: '✨', items: ['Haute Couture', 'Luxury Brands', 'Designer Wear', 'High Fashion'] }
+    }
+  },
+  content_creators: {
+    name: 'Content Creators',
+    icon: '📱',
+    color: 'from-blue-500 to-purple-600',
+    subcategories: {
+      youtube: { name: 'YouTube Creators', icon: '📺', items: ['Vloggers', 'Educational Content', 'Entertainment', 'Tutorial Videos'] },
+      instagram: { name: 'Instagram Creators', icon: '📷', items: ['Reels Creators', 'Lifestyle Content', 'Travel Content', 'Food Content'] },
+      blog: { name: 'Bloggers', icon: '📝', items: ['Travel Bloggers', 'Food Bloggers', 'Fashion Bloggers', 'Tech Bloggers'] },
+      podcast: { name: 'Podcasters', icon: '🎙️', items: ['Interview Podcasts', 'Storytelling Podcasts', 'Educational Podcasts', 'Entertainment Podcasts'] }
+    }
+  },
+  influencers: {
+    name: 'Influencers',
+    icon: '🌟',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      fashion: { name: 'Fashion Influencers', icon: '👗', items: ['Fashion Bloggers', 'Style Influencers', 'Outfit Ideas', 'Fashion Trends'] },
+      lifestyle: { name: 'Lifestyle Influencers', icon: '🌟', items: ['Lifestyle Content', 'Daily Routine', 'Home Decor', 'Lifestyle Tips'] },
+      travel: { name: 'Travel Influencers', icon: '✈️', items: ['Travel Bloggers', 'Destination Guides', 'Travel Tips', 'Adventure Content'] },
+      fitness: { name: 'Fitness Influencers', icon: '💪', items: ['Workout Content', 'Fitness Tips', 'Nutrition', 'Wellness'] }
+    }
+  },
+  tattoo_artists: {
+    name: 'Tattoo Artists',
+    icon: '🎨',
+    color: 'from-gray-500 to-gray-600',
+    subcategories: {
+      traditional: { name: 'Traditional Tattoo', icon: '🎨', items: ['Traditional Tattoos', 'Old School', 'American Traditional', 'Tribal Tattoos'] },
+      modern: { name: 'Modern Tattoo', icon: '🎭', items: ['Modern Tattoos', 'Contemporary', 'Illustrative', 'Geometric'] },
+      realistic: { name: 'Realistic Tattoo', icon: '👤', items: ['Realistic Portraits', '3D Tattoos', 'Hyperrealistic', 'Black & Gray'] },
+      watercolor: { name: 'Watercolor Tattoo', icon: '🎨', items: ['Watercolor Tattoos', 'Brush Style', 'Colorful Tattoos', 'Artistic Tattoos'] }
+    }
+  },
+  graphic_designers: {
+    name: 'Graphic Designers',
+    icon: '🖼️',
+    color: 'from-blue-500 to-gray-600',
+    subcategories: {
+      branding: { name: 'Branding Design', icon: '🏷️', items: ['Logo Design', 'Brand Identity', 'Business Cards', 'Brand Guidelines'] },
+      web: { name: 'Web Design', icon: '💻', items: ['Website Design', 'UI/UX Design', 'Mobile Apps', 'Landing Pages'] },
+      print: { name: 'Print Design', icon: '📄', items: ['Brochures', 'Flyers', 'Posters', 'Magazine Layouts'] },
+      social: { name: 'Social Media Design', icon: '📱', items: ['Social Media Posts', 'Instagram Stories', 'Facebook Covers', 'Twitter Headers'] }
+    }
+  },
+  voice_over_artists: {
+    name: 'Voice Over Artists',
+    icon: '🎤',
+    color: 'from-purple-500 to-pink-600',
+    subcategories: {
+      commercial: { name: 'Commercial Voice', icon: '📺', items: ['TV Commercials', 'Radio Ads', 'Jingle Voice', 'Brand Voice'] },
+      animation: { name: 'Animation Voice', icon: '🎭', items: ['Cartoon Voices', 'Character Voices', 'Dubbing', 'Video Games'] },
+      narration: { name: 'Narration', icon: '📖', items: ['Documentary Narration', 'Audiobooks', 'E-learning', 'Training Videos'] },
+      corporate: { name: 'Corporate Voice', icon: '🏢', items: ['Corporate Videos', 'Training Modules', 'IVR Systems', 'Presentations'] }
+    }
+  },
+  poets: {
+    name: 'Poets',
+    icon: '📜',
+    color: 'from-blue-500 to-gray-600',
+    subcategories: {
+      traditional: { name: 'Traditional Poetry', icon: '📜', items: ['Classical Poetry', 'Shayari', 'Ghazals', 'Folk Poetry'] },
+      modern: { name: 'Modern Poetry', icon: '✍️', items: ['Modern Poetry', 'Spoken Word', 'Slam Poetry', 'Performance Poetry'] },
+      romantic: { name: 'Romantic Poetry', icon: '❤️', items: ['Love Poems', 'Romantic Shayari', 'Couplets', 'Romantic Verses'] },
+      motivational: { name: 'Motivational Poetry', icon: '🌟', items: ['Inspirational Poetry', 'Motivational Verses', 'Life Poetry', 'Uplifting Words'] }
+    }
+  },
+  standup_artists: {
+    name: 'Stand-up Artists',
+    icon: '🎤',
+    color: 'from-yellow-500 to-orange-600',
+    subcategories: {
+      observational: { name: 'Observational Comedy', icon: '👀', items: ['Observational Humor', 'Everyday Life', 'Social Commentary', 'Relatable Comedy'] },
+      satire: { name: 'Satire Comedy', icon: '😏', items: ['Satirical Comedy', 'Political Satire', 'Social Satire', 'Dark Humor'] },
+      clean: { name: 'Clean Comedy', icon: '😄', items: ['Family Friendly', 'Clean Humor', 'All Ages', 'Wholesome Comedy'] },
+      alternative: { name: 'Alternative Comedy', icon: '🎭', items: ['Alternative Comedy', 'Experimental', 'Improvisational', 'Niche Humor'] }
+    }
+  },
+  music_producers: {
+    name: 'Music Producers',
+    icon: '🎵',
+    color: 'from-indigo-500 to-purple-600',
+    subcategories: {
+      electronic: { name: 'Electronic Music', icon: '🎧', items: ['EDM Production', 'Techno', 'House Music', 'Trance', 'Dubstep'] },
+      hip_hop: { name: 'Hip-Hop Production', icon: '🎤', items: ['Hip-Hop Beats', 'Trap Music', 'R&B Production', 'Urban Music'] },
+      bollywood: { name: 'Bollywood Music', icon: '🎬', items: ['Bollywood Production', 'Film Music', 'Indian Pop', 'Fusion Music'] },
+      classical: { name: 'Classical Production', icon: '🎵', items: ['Classical Arrangement', 'Orchestral Production', 'Classical Recording', 'Traditional Music'] }
     }
   }
 };
@@ -145,6 +529,23 @@ const CategoryPage = ({ config }) => {
           const artistsData = result.artists || [];
           setArtists(artistsData);
           console.log('✅ Artists fetched successfully:', artistsData.length, 'artists');
+          
+          // Log budget data for debugging
+          if (artistsData.length > 0) {
+            console.log('💰 Sample artist budget data:');
+            artistsData.slice(0, 3).forEach((artist, index) => {
+              console.log(`  ${index + 1}. ${artist.fullName || artist.name}:`, {
+                budget: artist.budget,
+                budgetMin: artist.budgetMin,
+                budgetMax: artist.budgetMax,
+                price: artist.price,
+                hasBudget: !!artist.budget,
+                hasBudgetMin: !!artist.budgetMin,
+                hasBudgetMax: !!artist.budgetMax,
+                allFields: Object.keys(artist)
+              });
+            });
+          }
         } else {
           throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
         }
@@ -165,15 +566,31 @@ const CategoryPage = ({ config }) => {
   useEffect(() => {
     let allArtists = [...artists];
     
+    console.log('🔄 Filtering triggered with:');
+    console.log('   - Total artists:', allArtists.length);
+    console.log('   - Selected category:', selectedCategoryData?.name);
+    console.log('   - Filters:', filters);
+    
     // Calculate relevance score for each artist based on ALL filters
     const scoredArtists = allArtists.map(artist => {
       let score = 0;
       let matchDetails = [];
 
       // Category Matching - Highest Priority (15 points exact)
-      if (selectedCategoryData && artist.category && selectedCategoryData.name && artist.category.toLowerCase() === selectedCategoryData.name.toLowerCase()) {
-        score += 15;
-        matchDetails.push('Exact category match');
+      if (selectedCategoryData && selectedCategoryData.name && artist.category) {
+        const selectedCategoryName = selectedCategoryData.name.toLowerCase().trim();
+        const artistCategoryName = artist.category.toLowerCase().trim();
+        
+        // Exact match
+        if (artistCategoryName === selectedCategoryName) {
+          score += 15;
+          matchDetails.push('Exact category match');
+        }
+        // Partial match (contains)
+        else if (artistCategoryName.includes(selectedCategoryName) || selectedCategoryName.includes(artistCategoryName)) {
+          score += 10;
+          matchDetails.push('Partial category match');
+        }
       }
 
       // Subcategory Matching - Higher Priority (12 points exact, 8 points skills)
@@ -338,7 +755,7 @@ const CategoryPage = ({ config }) => {
     }
     
     // Log scoring details for debugging
-    if (filters.location || filters.skill || filters.subcategory !== 'all' || filters.minBudget || filters.maxBudget) {
+    if (filters.location || filters.skill || filters.subcategory !== 'all' || filters.minBudget || filters.maxBudget || selectedCategoryData) {
       console.log('🎯 Filter Results - Top 5 Artists:');
       scoredArtists.slice(0, 5).forEach((artist, index) => {
         console.log(`${index + 1}. ${artist.fullName} - Score: ${artist.relevanceScore} - ${artist.matchDetails.join(', ')}`);
@@ -346,7 +763,7 @@ const CategoryPage = ({ config }) => {
     }
     
     setDisplayArtists(scoredArtists);
-  }, [artists, filters]);
+  }, [artists, filters, selectedCategoryData]);
 
   if (loading) {
     return (
@@ -406,11 +823,18 @@ const CategoryPage = ({ config }) => {
 
   // Category selection handler
   const handleCategorySelect = (categoryKey) => {
+    console.log('🎯 Category selected:', categoryKey);
+    
     if (allCategoriesData[categoryKey]) {
-      setSelectedCategoryData(allCategoriesData[categoryKey]);
+      const categoryData = allCategoriesData[categoryKey];
+      console.log('📝 Category data:', categoryData.name);
+      
+      setSelectedCategoryData(categoryData);
       setExpandedCategory(expandedCategory === categoryKey ? null : categoryKey); // Toggle dropdown
       setSelectedSubcategory('All Subcategories');
       setFilters(prev => ({ ...prev, subcategory: 'all' }));
+      
+      console.log('✅ Category selection completed:', categoryData.name);
     }
   };
 

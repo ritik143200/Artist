@@ -37,9 +37,9 @@ const idProofsDir = path.join(uploadsDir, 'id-proofs');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/artists', artistsRoute);
 app.use('/api/artist', artistRoutes);
+app.use('/api/artists', artistsRoute);
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

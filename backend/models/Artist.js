@@ -82,6 +82,16 @@ const artistSchema = new mongoose.Schema({
     required: false,
     default: 0
   },
+  budgetMin: {
+    type: Number,
+    required: false,
+    default: 0
+  },
+  budgetMax: {
+    type: Number,
+    required: false,
+    default: 0
+  },
 
   // Portfolio & Social
   profileImage: {

@@ -41,7 +41,8 @@ const predefinedArtists = [
     skills: ['Bhangra', 'Bollywood', 'Folk', 'Stage Performance', 'Choreography'],
     bio: 'Professional Bhangra dancer with over 8 years of experience. Specialized in Punjabi folk dance and Bollywood performances. Available for weddings, corporate events, and cultural shows.',
     location: 'Bangalore',
-    budget: 42126,
+    budgetMin: 35000, // Starting from ₹35,000
+    budgetMax: 60000, // Upto ₹60,000
     socialLinks: {
       instagram: 'https://instagram.com/manishbhangra',
       youtube: 'https://youtube.com/manishbhangra',
@@ -73,7 +74,8 @@ const predefinedArtists = [
     skills: ['Bharatanatyam', 'Classical', 'Carnatic', 'Temple Dance', 'Traditional'],
     bio: 'Trained Bharatanatyam dancer with 4 years of professional experience. Expert in classical dance forms and temple dance traditions. Perfect for cultural and religious events.',
     location: 'Mumbai',
-    budget: 35500,
+    budgetMin: 25000, // Starting from ₹25,000
+    budgetMax: 45000, // Upto ₹45,000
     socialLinks: {
       instagram: 'https://instagram.com/priyabharatnatyam',
       youtube: 'https://youtube.com/priyabharatnatyam',
@@ -104,7 +106,8 @@ const predefinedArtists = [
     skills: ['Hip-Hop', 'Contemporary', 'Street Dance', 'Freestyle', 'Break Dance'],
     bio: 'Professional hip-hop dancer and choreographer with 7 years of experience. Specialized in street dance, freestyle, and contemporary fusion. Available for parties, concerts, and dance competitions.',
     location: 'Delhi',
-    budget: 28750,
+    budgetMin: 20000, // Starting from ₹20,000
+    budgetMax: 35000, // Upto ₹35,000
     socialLinks: {
       instagram: 'https://instagram.com/rahulhiphop',
       youtube: 'https://youtube.com/rahulhiphop',
@@ -364,7 +367,8 @@ const generateRandomArtist = (index) => {
     skills: [subcategory, 'Professional', 'Experienced', 'Event Performance'],
     bio: `Professional ${subcategory} artist with over ${Math.floor(Math.random() * 10) + 1} years of experience. Specialized in ${subcategory} performances and events. Available for weddings, parties, and corporate events.`,
     location: city,
-    budget: Math.floor(Math.random() * 50000) + 5000,
+    budgetMin: Math.floor(Math.random() * 30000) + 10000, // Starting from ₹10,000 - ₹40,000
+    budgetMax: Math.floor(Math.random() * 50000) + 40000, // Upto ₹40,000 - ₹90,000
     socialLinks: {
       instagram: `https://instagram.com/${firstName.toLowerCase()}${lastName.toLowerCase()}`,
       youtube: `https://youtube.com/${firstName.toLowerCase()}${lastName.toLowerCase()}`,
@@ -421,9 +425,16 @@ const seedArtists = async () => {
     
     // Display sample data
     insertedArtists.slice(0, 5).forEach((artist, index) => {
+      const budgetDisplay = artist.budgetMin && artist.budgetMax 
+        ? `₹${artist.budgetMin.toLocaleString()} - ₹${artist.budgetMax.toLocaleString()}`
+        : artist.budget 
+          ? `₹${artist.budget.toLocaleString()}`
+          : '₹0';
+      
       console.log(`\n${index + 1}. ${artist.fullName} - ${artist.category} (${artist.subcategory})`);
-      console.log(`   📍 ${artist.location} | 💰 ₹${artist.budget} | ⭐ ${artist.rating.average}`);
+      console.log(`   📍 ${artist.location} | 💰 ${budgetDisplay} | ⭐ ${artist.rating.average}`);
       console.log(`   🎭 ${artist.genre} | 🎨 ${artist.subOptions?.slice(0, 3).join(', ')}`);
+      console.log(`   📊 Budget Min: ${artist.budgetMin}, Max: ${artist.budgetMax}`);
     });
     
     // Display statistics

@@ -1,7 +1,12 @@
 import { useRouter } from '../contexts/RouterContext';
+import { useState } from 'react';
+import ArtistInquiry from './ArtistInquiry';
 
 const ArtistCard = ({ artist, config, fullWidth = false }) => {
   const { navigate } = useRouter();
+  const [showInquiry, setShowInquiry] = useState(false);
+  
+  console.log('🔄 ArtistCard rendered, showInquiry:', showInquiry);
 
   // Handle both backend and mock data structures
   const artistName = artist.fullName ||
@@ -9,11 +14,33 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
     artist.name ||
     'Artist Name';
   const artistSpecialty = artist.subcategory || artist.specialty || artist.skills?.[0] || 'Professional Artist';
-  const artistRating = artist.rating?.average || artist.rating || 0;
-  const numericRating = Number(artistRating) || 0;
-  const artistReviews = artist.rating?.count || artist.reviews || 0;
-  const artistPrice = artist.budget ? `₹${artist.budget.toLocaleString()}` : artist.price || 'Price on request';
-
+const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.average : 
+                      typeof artist.rating === 'number' ? artist.rating : 
+                      0;
+  const artistReviews = typeof artist.rating?.count === 'number' ? artist.rating.count : 
+                      typeof artist.reviews === 'number' ? artist.reviews : 
+                      0;
+  const artistPrice = artist.budgetMin && artist.budgetMax 
+    ? `₹${artist.budgetMin.toLocaleString()} - ₹${artist.budgetMax.toLocaleString()}`
+    : artist.budgetMin && !artist.budgetMax
+      ? `Starting from ₹${artist.budgetMin.toLocaleString()}`
+      : artist.budgetMax && !artist.budgetMin
+        ? `Upto ₹${artist.budgetMax.toLocaleString()}`
+        : artist.budget 
+          ? `₹${artist.budget.toLocaleString()}` 
+          : artist.price || 'Price on request';
+  
+  console.log('💰 Artist budget data:', {
+    budget: artist.budget,
+    budgetMin: artist.budgetMin,
+    budgetMax: artist.budgetMax,
+    price: artist.price,
+    artistPrice: artistPrice,
+    budgetType: artist.budgetMin && artist.budgetMax ? 'Range' : 
+                artist.budgetMin && !artist.budgetMax ? 'Min Only' : 
+                artist.budgetMax && !artist.budgetMin ? 'Max Only' : 
+                artist.budget ? 'Single' : 'None'
+  });
   // Improved image handling
   const artistImage = artist.profileImage || artist.image || '👤';
   const isImageURL = typeof artistImage === 'string' && (artistImage.startsWith('http') || artistImage.startsWith('/api/'));
@@ -25,6 +52,11 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
   const artistSubcategory = artist.subcategory || artist.specialty || 'Professional';
   const artistSubOptions = artist.subOptions || artist.styles || artist.skills || [];
   const artistGenre = artist.genre || artist.type || '';
+
+  // Return modal if open
+  if (showInquiry) {
+    return <ArtistInquiry artist={artist} config={config} onClose={() => setShowInquiry(false)} />;
+  }
 
   // Full width layout (row-wise)
   if (fullWidth) {
@@ -177,7 +209,11 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate('artist', { artist });
+                      if (artist._id || artist.id) {
+                        navigate(`/artist/${artist._id || artist.id}`);
+                      } else {
+                        navigate('artist', { artist });
+                      }
                     }}
                     className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
@@ -186,9 +222,12 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Add contact functionality
+                      console.log('🎯 Contact button clicked!');
+                      console.log('🔄 Before setShowInquiry:', showInquiry);
+                      setShowInquiry(true);
+                      console.log('🔄 After setShowInquiry call');
                     }}
-                    className="px-6 py-2 border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-medium"
+                    className="px-6 py-2 border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-medium relative z-10"
                   >
                     Contact
                   </button>
@@ -230,7 +269,11 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
   return (
     <div
       onClick={() => {
-        navigate('artist', { artist });
+        if (artist._id || artist.id) {
+          navigate(`/artist/${artist._id || artist.id}`);
+        } else {
+          navigate('artist', { artist });
+        }
       }}
       className="flex-shrink-0 w-64 lg:w-72 bg-white rounded-2xl overflow-hidden shadow-lg card-hover cursor-pointer"
     >
@@ -285,6 +328,79 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
         >
           View Profile
         </button>
+      </div>
+    </div>
+  );
+  
+  // Return modal if open, otherwise the card
+  if (showInquiry) {
+    return <ArtistInquiry artist={artist} config={config} onClose={() => setShowInquiry(false)} />;
+  }
+  
+  return (
+    <div 
+      onClick={() => navigate('artist', { artist })}
+      className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:border-blue-200"
+    >
+      {/* Grid layout content */}
+      <div className="flex flex-col h-full">
+        {/* Artist Image */}
+        <div className="relative mb-4">
+          <div className="relative" style={{ width: '100%', aspectRatio: '1/1.54' }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner">
+              {isImageURL ? (
+                <img 
+                  src={artistImage} 
+                  alt={artistName}
+                  className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className="text-4xl" style={{ display: isImageURL ? 'none' : 'flex' }}>
+                {artistImage}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Artist Info */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1">
+              <span className="text-yellow-500 text-sm">⭐</span>
+              <span className="font-bold text-sm">{artistRating.toFixed(1)}</span>
+              <span className="text-gray-400 text-xs">({artistReviews})</span>
+            </div>
+            <span className="text-lg font-bold text-brand-600">{artistPrice}</span>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('artist', { artist });
+              }}
+              className="w-full py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors font-medium text-sm"
+            >
+              View Profile
+            </button>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('🎯 Contact button clicked (grid layout)!');
+                console.log('🔄 Before setShowInquiry (grid):', showInquiry);
+                setShowInquiry(true);
+                console.log('🔄 After setShowInquiry call (grid)');
+              }}
+              className="w-full py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm relative z-10"
+            >
+              Contact
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

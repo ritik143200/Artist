@@ -9,8 +9,7 @@ const ArtistPage = ({ config }) => {
   // Handle both backend and mock data structures
   const artistName = artist.fullName || artist.name || `${artist.firstName || ''} ${artist.lastName || ''}`.trim() || 'Artist Name';
   const artistSpecialty = artist.subcategory || artist.specialty || artist.skills?.[0] || 'Professional Artist';
-  const artistRating = artist.rating?.average || artist.rating || 0;
-  const numericRating = Number(artistRating) || 0;
+  const artistRating = Number(artist.rating?.average || artist.rating || 0);
   const artistReviews = artist.rating?.count || artist.reviews || 0;
   const artistPrice = artist.budget ? `₹${artist.budget.toLocaleString()}` : artist.price || 'Price on request';
 
@@ -19,16 +18,15 @@ const ArtistPage = ({ config }) => {
 
   const artistLocation = artist.location || 'Location not specified';
   const artistBio = artist.bio || `${artistName} is a highly skilled ${artistSpecialty} professional with years of experience in the industry.`;
-  const isVerified = artist.verificationStatus === 'verified' || artist.verified;
+    const isVerified = artist.verificationStatus === 'verified' || artist.verified;
 
   const showsHosted = Math.floor(artistReviews * 1.5) || 156;
   const happyClients = artistReviews || '120+';
   const experienceYears = artist.experience || '8+';
 
   return (
-    <div className="pt-20 pb-16 min-h-screen bg-gray-50/50">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
+    <div className="pt-24 pb-16 min-h-full" style={{ backgroundColor: config.background_color }}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <button
           onClick={() => navigate('home')}
           className="mb-4 flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors font-medium text-sm"
@@ -125,32 +123,12 @@ const ArtistPage = ({ config }) => {
                 <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-3">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                 </div>
-                <div className="text-2xl font-black text-gray-900 leading-tight">{showsHosted}</div>
-                <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-1">Shows Hosted</div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-400 flex items-center justify-center mb-3">
-                  <span className="text-lg">⭐</span>
-                </div>
-                <div className="text-2xl font-black text-gray-900 leading-tight">{artistReviews}</div>
-                <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-1">Verified Reviews</div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                <div className="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center mb-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                </div>
-                <div className="text-2xl font-black text-gray-900 leading-tight">{happyClients}</div>
-                <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-1">Happy Clients</div>
-              </div>
-
-              <div className="bg-white rounded-3xl p-6 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center mb-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                </div>
-                <div className="text-2xl font-black text-gray-900 leading-tight">{experienceYears} Yrs</div>
-                <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-1">Experience</div>
+                <button
+                  className="mt-3 px-8 py-3 rounded-full font-semibold text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  style={{ backgroundColor: config.primary_action }}
+                >
+                  Book Now
+                </button>
               </div>
             </div>
 

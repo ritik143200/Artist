@@ -4,21 +4,22 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
   const { navigate } = useRouter();
 
   // Handle both backend and mock data structures
-  const artistName = artist.fullName || 
-                     `${artist.firstName || ''} ${artist.lastName || ''}`.trim() || 
-                     artist.name || 
-                     'Artist Name';
+  const artistName = artist.fullName ||
+    `${artist.firstName || ''} ${artist.lastName || ''}`.trim() ||
+    artist.name ||
+    'Artist Name';
   const artistSpecialty = artist.subcategory || artist.specialty || artist.skills?.[0] || 'Professional Artist';
   const artistRating = artist.rating?.average || artist.rating || 0;
+  const numericRating = Number(artistRating) || 0;
   const artistReviews = artist.rating?.count || artist.reviews || 0;
   const artistPrice = artist.budget ? `₹${artist.budget.toLocaleString()}` : artist.price || 'Price on request';
-  
+
   // Improved image handling
   const artistImage = artist.profileImage || artist.image || '👤';
   const isImageURL = typeof artistImage === 'string' && (artistImage.startsWith('http') || artistImage.startsWith('/api/'));
   const artistLocation = artist.location || 'Location not specified';
   const isVerified = artist.verificationStatus === 'verified' || artist.verified;
-  
+
   // Category information
   const artistCategory = artist.category || artist.categoryName || 'Artist';
   const artistSubcategory = artist.subcategory || artist.specialty || 'Professional';
@@ -28,7 +29,7 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
   // Full width layout (row-wise)
   if (fullWidth) {
     return (
-      <div 
+      <div
         onClick={() => navigate('artist', { artist })}
         className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:border-blue-200"
       >
@@ -39,8 +40,8 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
               <div className="relative" style={{ width: '140px', aspectRatio: '1/1.54' }}>
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner">
                   {isImageURL ? (
-                    <img 
-                      src={artistImage} 
+                    <img
+                      src={artistImage}
                       alt={artistName}
                       className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
@@ -54,7 +55,7 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Status Badges */}
               <div className="absolute -top-2 -right-2 flex flex-col gap-2">
                 {isVerified && (
@@ -118,9 +119,9 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                     )}
                   </div>
                 </div>
-                
+
                 <p className="text-lg text-gray-600 mb-3 font-medium">{artistSpecialty}</p>
-                
+
                 {/* Sub-options/Styles */}
                 {artistSubcategory && (
                   <div className="mb-4">
@@ -137,12 +138,12 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                       <span className="text-yellow-500">⭐</span>
-                      <span className="font-bold text-gray-900">{artistRating.toFixed(1)}</span>
+                      <span className="font-bold text-gray-900">{numericRating.toFixed(1)}</span>
                     </div>
                     <span className="text-gray-500">({artistReviews} reviews)</span>
                   </div>
@@ -173,7 +174,7 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate('artist', { artist });
@@ -182,7 +183,7 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
                   >
                     View Profile
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       // Add contact functionality
@@ -227,22 +228,17 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
 
   // Original card layout (grid)
   return (
-<<<<<<< Updated upstream
-    <div 
-      onClick={() => navigate('artist', { artist })}
-=======
     <div
       onClick={() => {
         navigate('artist', { artist });
       }}
->>>>>>> Stashed changes
       className="flex-shrink-0 w-64 lg:w-72 bg-white rounded-2xl overflow-hidden shadow-lg card-hover cursor-pointer"
     >
       <div className="relative" style={{ aspectRatio: '1/1.54' }}>
         <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
           {isImageURL ? (
-            <img 
-              src={artistImage} 
+            <img
+              src={artistImage}
               alt={artistName}
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -266,21 +262,21 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
           </div>
         )}
       </div>
-      
+
       <div className="p-4">
         <h3 className="font-bold text-gray-900 mb-1">{artistName}</h3>
         <p className="text-sm text-gray-600 mb-3">{artistSpecialty}</p>
-        
+
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1">
             <span className="text-yellow-500 text-sm">⭐</span>
-            <span className="font-bold text-sm">{artistRating.toFixed(1)}</span>
+            <span className="font-bold text-sm">{numericRating.toFixed(1)}</span>
             <span className="text-gray-400 text-xs">({artistReviews})</span>
           </div>
           <span className="text-lg font-bold text-brand-600">{artistPrice}</span>
         </div>
-        
-        <button 
+
+        <button
           onClick={(e) => {
             e.stopPropagation();
             navigate('artist', { artist });

@@ -96,7 +96,7 @@ const artistSchema = new mongoose.Schema({
   // Portfolio & Social
   profileImage: {
     type: String,
-    default: '/api/placeholder/artist-avatar.jpg'
+    default: 'https://picsum.photos/seed/artist-avatar/400/400.jpg'
   },
   portfolio: [{
     type: String, // File URLs

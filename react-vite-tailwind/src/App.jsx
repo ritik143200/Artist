@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { RouterProvider, useRouter } from './contexts/RouterContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
@@ -49,26 +50,28 @@ const AppContent = ({ config }) => {
   const isAuthPage = currentPath === 'auth' || currentPath === 'artist-registration' || currentPath === 'reset-password';
 
   return (
-    <div 
-      className="min-h-full w-full overflow-auto"
-      style={{ 
-        backgroundColor: config.background_color,
-        fontFamily: `${config.font_family}, sans-serif` 
-      }}
-    >
-      {!isAuthPage && <Navbar config={config} />}
-      {(currentPath === 'auth' || currentPath === 'reset-password') && <AuthPage />}
-      {currentPath === 'artist-registration' && <ArtistRegistrationPage config={config} />}
-      {currentPath === 'about' && <AboutPage config={config} />}
-      {currentPath === 'services' && <ServicesPage config={config} />}
-      {currentPath === 'faq' && <FAQPage config={config} />}
-      {currentPath === 'category' && <CategoryPage config={config} />}
-      {currentPath === 'artist' && <ArtistPage config={config} />}
-      {currentPath === 'home' && <HomePage config={config} />}
-      {currentPath === 'user-dashboard' && <UserDashboard config={config} />}
-      {currentPath === 'artist-dashboard' && <ArtistDashboard config={config} />}
-      {currentPath === 'admin-dashboard' && <AdminDashboard config={config} />}
-    </div>
+    <AuthProvider>
+      <div 
+        className="min-h-full w-full overflow-auto"
+        style={{ 
+          backgroundColor: config.background_color,
+          fontFamily: `${config.font_family}, sans-serif` 
+        }}
+      >
+        {!isAuthPage && <Navbar config={config} />}
+        {(currentPath === 'auth' || currentPath === 'reset-password') && <AuthPage />}
+        {currentPath === 'artist-registration' && <ArtistRegistrationPage config={config} />}
+        {currentPath === 'about' && <AboutPage config={config} />}
+        {currentPath === 'services' && <ServicesPage config={config} />}
+        {currentPath === 'faq' && <FAQPage config={config} />}
+        {currentPath === 'category' && <CategoryPage config={config} />}
+        {currentPath === 'artist' && <ArtistPage config={config} />}
+        {currentPath === 'home' && <HomePage config={config} />}
+        {currentPath === 'user-dashboard' && <UserDashboard config={config} />}
+        {currentPath === 'artist-dashboard' && <ArtistDashboard config={config} />}
+        {currentPath === 'admin-dashboard' && <AdminDashboard config={config} />}
+      </div>
+    </AuthProvider>
   );
 };
 

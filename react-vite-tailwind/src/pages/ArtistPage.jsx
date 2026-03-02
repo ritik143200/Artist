@@ -1,271 +1,653 @@
 import { useRouter } from '../contexts/RouterContext';
 import { artists } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import ArtistInquiry from '../components/ArtistInquiry';
 
 const ArtistPage = ({ config }) => {
   const { params, navigate } = useRouter();
+  const [artistData, setArtistData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
 
-  const artist = params.artist || artists[0];
+  // Get artist from params or mock data
+  let artist = params.artist || artists[0];
+  
+  // Extract artist ID from URL params if available
+  const artistId = params.artistId || artist._id || artist.id;
+  
+  console.log('🎨 ArtistPage rendered with:');
+  console.log('📋 Params:', params);
+  console.log('🆔 ArtistId:', artistId);
+  console.log('👤 Artist object:', artist);
+  
+  // If we have artistId but no artist object, find artist by ID
+  if (!params.artist && artistId) {
+    // Handle both mock data IDs (numbers) and MongoDB IDs (strings)
+    artist = artists.find(a => 
+      a._id === artistId || 
+      a.id === artistId || 
+      a.id === parseInt(artistId) ||
+      String(a.id) === String(artistId)
+    );
+    
+    // If no artist found with the given ID, it means it's a MongoDB ID
+    // In that case, we need to fetch from backend or use the first artist as fallback
+    if (!artist) {
+      console.log('⚠️ No artist found with ID:', artistId);
+      console.log('🔄 Using fallback artist (first in list)');
+      artist = artists[0]; // Fallback to first artist
+    } else {
+      console.log('✅ Found artist by ID:', artist);
+    }
+  }
 
-  // Handle both backend and mock data structures
-  const artistName = artist.fullName || artist.name || `${artist.firstName || ''} ${artist.lastName || ''}`.trim() || 'Artist Name';
-  const artistSpecialty = artist.subcategory || artist.specialty || artist.skills?.[0] || 'Professional Artist';
-  const artistRating = Number(artist.rating?.average || artist.rating || 0);
-  const artistReviews = artist.rating?.count || artist.reviews || 0;
-  const artistPrice = artist.budget ? `₹${artist.budget.toLocaleString()}` : artist.price || 'Price on request';
+  // Simulate fetching artist data from MongoDB
+  useEffect(() => {
+    const fetchArtistData = async () => {
+      setLoading(true);
+      try {
+        // Simulate API call to MongoDB
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        let fetchedArtist;
+        
+        // If we have a MongoDB ID (24-character hex string), simulate fetching from MongoDB
+        if (artistId && artistId.length === 24 && /^[0-9a-fA-F]{24}$/.test(artistId)) {
+          console.log('🔗 Fetching artist from MongoDB with ID:', artistId);
+          
+          // Simulate MongoDB artist data
+          fetchedArtist = {
+            _id: artistId,
+            fullName: 'Kavita Reddy',
+            name: 'Kavita Reddy',
+            firstName: 'Kavita',
+            lastName: 'Reddy',
+            category: 'Makeup Artists',
+            specialty: 'Bridal • Makeup Artists',
+            location: 'Bangalore',
+            bio: 'Professional makeup artist with 8+ years of experience in bridal makeup, specializing in traditional and contemporary looks. Certified by top makeup academies and trained in the latest techniques.',
+            rating: { average: 4.8, count: 156 },
+            reviews: 156,
+            budget: 25000,
+            budgetMin: 25000,
+            budgetMax: 50000,
+            experience: '8+ Years',
+            showsHosted: 450,
+            happyClients: 380,
+            responseTime: '2 Hours',
+            skills: ['Bridal Makeup', 'HD Makeup', 'Airbrush Makeup', 'Traditional Makeup', 'Party Makeup', 'Fashion Makeup'],
+            languages: ['Hindi', 'English', 'Kannada', 'Tamil'],
+            portfolio: [
+              { id: 1, title: 'Bridal Look 1', image: 'https://picsum.photos/seed/bridal1/400/300.jpg' },
+              { id: 2, title: 'Bridal Look 2', image: 'https://picsum.photos/seed/bridal2/400/300.jpg' },
+              { id: 3, title: 'Party Makeup', image: 'https://picsum.photos/seed/party1/400/300.jpg' },
+              { id: 4, title: 'Fashion Look', image: 'https://picsum.photos/seed/fashion1/400/300.jpg' },
+              { id: 5, title: 'Traditional Look', image: 'https://picsum.photos/seed/traditional1/400/300.jpg' },
+              { id: 6, title: 'Contemporary Look', image: 'https://picsum.photos/seed/contemporary1/400/300.jpg' }
+            ],
+            socialLinks: {
+              instagram: 'https://instagram.com/kavitareddy',
+              facebook: 'https://facebook.com/kavitareddy',
+              twitter: 'https://twitter.com/kavitareddy',
+              website: 'https://kavitareddy.com'
+            },
+            verified: true,
+            trending: true
+          };
+          
+          console.log('✅ MongoDB artist data fetched:', fetchedArtist);
+        } else {
+          // Handle both backend and mock data structures
+          fetchedArtist = artist;
+          console.log('📋 Using mock/artist data:', fetchedArtist);
+        }
+        const processedArtist = {
+          id: fetchedArtist._id || fetchedArtist.id,
+          name: fetchedArtist.fullName || fetchedArtist.name || `${fetchedArtist.firstName || ''} ${fetchedArtist.lastName || ''}`.trim() || 'Artist Name',
+          specialty: fetchedArtist.subcategory || fetchedArtist.specialty || fetchedArtist.skills?.[0] || 'Professional Artist',
+          category: fetchedArtist.category || 'Entertainment',
+          rating: Number(fetchedArtist.rating?.average || fetchedArtist.rating || 0),
+          reviews: fetchedArtist.rating?.count || fetchedArtist.reviews || 0,
+          budget: fetchedArtist.budgetMin && fetchedArtist.budgetMax 
+            ? `₹${fetchedArtist.budgetMin.toLocaleString()} - ₹${fetchedArtist.budgetMax.toLocaleString()}` 
+            : fetchedArtist.budgetMin && !fetchedArtist.budgetMax
+              ? `Starting from ₹${fetchedArtist.budgetMin.toLocaleString()}` 
+              : fetchedArtist.budgetMax && !fetchedArtist.budgetMin
+                ? `Upto ₹${fetchedArtist.budgetMax.toLocaleString()}` 
+                : fetchedArtist.budget 
+                  ? `₹${fetchedArtist.budget.toLocaleString()}` 
+                  : fetchedArtist.price || 'Price on request',
+          location: fetchedArtist.location || 'Location not specified',
+          bio: fetchedArtist.bio || fetchedArtist.description || 'No bio available for this artist.',
+          experience: fetchedArtist.experience || 'Experience not specified',
+          showsHosted: fetchedArtist.showsHosted || fetchedArtist.events || 0,
+          happyClients: fetchedArtist.happyClients || fetchedArtist.clients || 0,
+          responseTime: fetchedArtist.responseTime || 'Response time not specified',
+          skills: fetchedArtist.skills || fetchedArtist.services || [],
+          languages: fetchedArtist.languages || ['English'],
+          portfolio: fetchedArtist.portfolio || [],
+          socialLinks: fetchedArtist.socialLinks || {
+            instagram: '#',
+            facebook: '#',
+            twitter: '#',
+            website: '#'
+          },
+          verified: fetchedArtist.verified || false,
+          trending: fetchedArtist.trending || false
+        };
+        
+        setArtistData(processedArtist);
+      } catch (error) {
+        console.error('Error fetching artist data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const artistImage = artist.profileImage || artist.image || '👤';
-  const isImageURL = typeof artistImage === 'string' && (artistImage.startsWith('http') || artistImage.startsWith('/api/') || artistImage.startsWith('blob:'));
+    fetchArtistData();
+  }, [artist]);
 
-  const artistLocation = artist.location || 'Location not specified';
-  const artistBio = artist.bio || `${artistName} is a highly skilled ${artistSpecialty} professional with years of experience in the industry.`;
-    const isVerified = artist.verificationStatus === 'verified' || artist.verified;
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 min-h-full flex items-center justify-center" style={{ backgroundColor: config.background_color }}>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading artist profile...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const showsHosted = Math.floor(artistReviews * 1.5) || 156;
-  const happyClients = artistReviews || '120+';
-  const experienceYears = artist.experience || '8+';
+  if (!artistData) {
+    return (
+      <div className="pt-24 pb-16 min-h-full flex items-center justify-center" style={{ backgroundColor: config.background_color }}>
+        <div className="text-center">
+          <p className="text-gray-600">Artist not found</p>
+          <button 
+            onClick={() => navigate('home')}
+            className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const isImageURL = typeof artistData.image === 'string' && (artistData.image.startsWith('http') || artistData.image.startsWith('/api/') || artistData.image.startsWith('blob:'));
 
   return (
     <div className="pt-24 pb-16 min-h-full" style={{ backgroundColor: config.background_color }}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Button */}
         <button
           onClick={() => navigate('home')}
-          className="mb-4 flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors font-medium text-sm"
+          className="mb-6 flex items-center gap-2 transition-colors font-medium text-sm"
+          style={{ color: config.text_muted }}
+          onMouseEnter={(e) => e.currentTarget.style.color = config.text_primary}
+          onMouseLeave={(e) => e.currentTarget.style.color = config.text_muted}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back
+          Back to Artists
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-
-          {/* Main Content Area (Left side) */}
-          <div className="flex-1 min-w-0">
-            {/* Hero / Cover Image */}
-            <div className="relative h-[250px] md:h-[300px] bg-gray-900 rounded-[2rem] overflow-hidden shadow-sm">
-              <img
-                src="https://images.unsplash.com/photo-1516280440503-6c9fa5c6a33b?q=80&w=2000&auto=format&fit=crop"
-                alt="Cover"
-                className="w-full h-full object-cover opacity-60"
-              />
-
-              {/* Action Buttons Overlay */}
-              <div className="absolute top-4 right-4 flex gap-2">
-                <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition border border-white/30">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-5l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                </button>
-                <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition border border-white/30">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Profile Header Info */}
-            <div className="relative px-6">
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                {/* Profile Image - Overlapping */}
-                <div className="relative -mt-16 sm:-mt-24 z-10 flex-shrink-0">
-                  <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] rounded-3xl bg-white p-2 shadow-sm border border-gray-100">
-                    <div className="w-full h-full bg-blue-50 rounded-2xl overflow-hidden flex items-center justify-center">
-                      {isImageURL ? (
-                        <img src={artistImage} alt={artistName} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-5xl">👤</span>
-                      )}
-                    </div>
+        {/* Hero Section */}
+        <div 
+          className="relative rounded-3xl overflow-hidden shadow-2xl mb-8"
+          style={{ 
+            background: `linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%)`,
+            boxShadow: `0 20px 40px -10px ${config.primary_color}20`
+          }}
+        >
+          <div className="absolute inset-0 bg-black opacity-20"></div>
+          <img
+            src="https://images.unsplash.com/photo-1516280440503-6c9fa5c6a33b?q=80&w=2000&auto=format&fit=crop"
+            alt="Artist Background"
+            className="w-full h-64 object-cover opacity-30"
+          />
+          
+          <div className="relative z-10 p-8">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              {/* Profile Image */}
+              <div className="flex-shrink-0">
+                <div 
+                  className="w-32 h-32 rounded-2xl p-2 shadow-lg"
+                  style={{ backgroundColor: config.background_color }}
+                >
+                  <div className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: config.card_background }}>
+                    {isImageURL ? (
+                      <img src={artistData.image} alt={artistData.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-5xl">🎭</span>
+                    )}
                   </div>
-                  {isVerified && (
-                    <div className="absolute bottom-2 right-2 w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-sm">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
+                </div>
+                {artistData.verified && (
+                  <div 
+                    className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-white border-2 shadow-lg"
+                    style={{ 
+                      backgroundColor: config.success_color,
+                      borderColor: config.background_color
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Artist Info */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+                  <h1 className="text-4xl font-bold text-white">{artistData.name}</h1>
+                  {artistData.verified && (
+                    <span 
+                      className="px-3 py-1 text-xs font-bold rounded-full"
+                      style={{ 
+                        backgroundColor: config.success_color,
+                        color: 'white'
+                      }}
+                    >
+                      ✓ Verified
+                    </span>
                   )}
                 </div>
+                
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-white/90 mb-4">
+                  <span className="font-semibold text-lg">{artistData.specialty}</span>
+                  <span className="w-1 h-1 rounded-full bg-white/50"></span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {artistData.location}
+                  </span>
+                  <span className="w-1 h-1 rounded-full bg-white/50"></span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {artistData.rating.toFixed(1)} ({artistData.reviews} reviews)
+                  </span>
+                </div>
 
-                {/* Name & Titles */}
-                <div className="pt-2 md:pt-4 flex-1">
-                  <div className="flex flex-wrap items-center gap-3 mb-1">
-                    <h1 className="text-3xl font-extrabold text-blue-950 tracking-tight">{artistName}</h1>
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold rounded-full flex items-center gap-1.5 uppercase tracking-wide">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Featured Artist
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="font-bold text-orange-500 uppercase tracking-widest text-[11px]">{artistSpecialty}</span>
-
-                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-
-                    <span className="text-gray-700 flex items-center gap-1 font-bold">
-                      <svg className="w-4 h-4 text-yellow-400 mb-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      {numericRating.toFixed(1)}
-                      <span className="text-gray-400 font-medium text-xs ml-0.5">({artistReviews} reviews)</span>
-                    </span>
-
-                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-
-                    <span className="text-gray-500 flex items-center gap-1 font-medium">
-                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      {artistLocation}
-                    </span>
-                  </div>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-white/80 text-sm">
+                  <span>🎭 {artistData.showsHosted} Shows Hosted</span>
+                  <span>😊 {artistData.happyClients} Happy Clients</span>
+                  <span>⏰ {artistData.responseTime} Response Time</span>
                 </div>
               </div>
-            </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 px-2">
-              <div className="bg-white rounded-3xl p-6 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                </div>
-                <button
-                  className="mt-3 px-8 py-3 rounded-full font-semibold text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
-                  style={{ backgroundColor: config.primary_action }}
+              {/* CTA Button */}
+              <div className="flex-shrink-0">
+                <button 
+                  onClick={() => setShowInquiryModal(true)}
+                  className="px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                  style={{ 
+                    backgroundColor: config.primary_action,
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.boxShadow = `0 10px 30px -5px ${config.primary_action}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = `0 10px 20px -5px ${config.primary_action}30`;
+                  }}
                 >
                   Book Now
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Tabs Navigation */}
-            <div className="mt-10 border-b border-gray-200">
-              <nav className="flex gap-8 px-2 overflow-x-auto no-scrollbar">
-                {['Overview', 'Portfolio', 'Reviews', 'Services'].map((tab, idx) => (
-                  <button
-                    key={tab}
-                    className={`pb-4 text-xs font-black tracking-wider uppercase whitespace-nowrap border-b-2 transition-colors ${idx === 0 ? 'text-gray-900 border-orange-500' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </nav>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* About Section */}
+            <div 
+              className="rounded-2xl p-8 shadow-lg"
+              style={{ 
+                backgroundColor: config.card_background,
+                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+              }}
+            >
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: config.text_primary }}>
+                <svg className="w-6 h-6" style={{ color: config.primary_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                About {artistData.name}
+              </h2>
+              <p className="leading-relaxed mb-6" style={{ color: config.text_secondary }}>
+                {artistData.bio}
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div 
+                  className="text-center p-4 rounded-xl"
+                  style={{ backgroundColor: `${config.primary_color}10` }}
+                >
+                  <div className="text-2xl font-bold" style={{ color: config.primary_color }}>{artistData.experience}</div>
+                  <div className="text-sm" style={{ color: config.text_muted }}>Experience</div>
+                </div>
+                <div 
+                  className="text-center p-4 rounded-xl"
+                  style={{ backgroundColor: `${config.success_color}10` }}
+                >
+                  <div className="text-2xl font-bold" style={{ color: config.success_color }}>{artistData.languages.length}</div>
+                  <div className="text-sm" style={{ color: config.text_muted }}>Languages</div>
+                </div>
+                <div 
+                  className="text-center p-4 rounded-xl"
+                  style={{ backgroundColor: `${config.secondary_color}10` }}
+                >
+                  <div className="text-2xl font-bold" style={{ color: config.secondary_color }}>{artistData.skills.length}</div>
+                  <div className="text-sm" style={{ color: config.text_muted }}>Skills</div>
+                </div>
+                <div 
+                  className="text-center p-4 rounded-xl"
+                  style={{ backgroundColor: `${config.warning_color}10` }}
+                >
+                  <div className="text-2xl font-bold" style={{ color: config.warning_color }}>{artistData.rating.toFixed(1)}</div>
+                  <div className="text-sm" style={{ color: config.text_muted }}>Rating</div>
+                </div>
+              </div>
             </div>
 
-            {/* Content: Overview */}
-            <div className="py-8 px-2">
-              <h2 className="text-lg font-extrabold text-blue-950 flex items-center gap-2 mb-4">
-                <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Artist Biography
+            {/* Skills Section */}
+            <div 
+              className="rounded-2xl p-8 shadow-lg"
+              style={{ 
+                backgroundColor: config.card_background,
+                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+              }}
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: config.text_primary }}>
+                <svg className="w-6 h-6" style={{ color: config.success_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Skills & Expertise
               </h2>
-              <div className="text-gray-600 leading-relaxed text-[15px] max-w-2xl font-medium">
-                <p>{artistBio}</p>
-                {/* Fallback bio if empty or too short */}
-                {artistBio.length < 50 && (
-                  <p className="mt-2">Known for a commanding stage presence and fluent bilingual delivery, providing a memorable experience for all audiences. With extensive experience hosting high-profile summits, cultural festivals, and official ceremonies.</p>
-                )}
+              <div className="flex flex-wrap gap-3">
+                {artistData.skills.map((skill, index) => (
+                  <span 
+                    key={index}
+                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${config.primary_color}10, ${config.secondary_color}10)`,
+                      color: config.text_primary,
+                      border: `1px solid ${config.primary_color}20`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${config.primary_color}20, ${config.secondary_color}20)`;
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${config.primary_color}10, ${config.secondary_color}10)`;
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {skill}
+                  </span>
+                ))}
               </div>
+            </div>
 
-              {/* Areas of Expertise */}
-              <div className="mt-10">
-                <h3 className="text-[11px] font-black tracking-widest text-gray-400 uppercase mb-4">Areas of Expertise</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Anchor', 'Public Speaker', 'Event Host', 'Voice Over', 'Moderator'].map((skill) => (
-                    <span key={skill} className="px-5 py-2.5 bg-white border border-gray-100 rounded-full text-xs font-extrabold text-gray-600 shadow-sm">
-                      {skill}
-                    </span>
+            {/* Languages Section */}
+            <div 
+              className="rounded-2xl p-8 shadow-lg"
+              style={{ 
+                backgroundColor: config.card_background,
+                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+              }}
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: config.text_primary }}>
+                <svg className="w-6 h-6" style={{ color: config.secondary_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 8 19h8c-.07-3.39-3.783-8.23-4.249-14z" />
+                </svg>
+                Languages
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {artistData.languages.map((language, index) => (
+                  <span 
+                    key={index}
+                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md"
+                    style={{ 
+                      backgroundColor: `${config.secondary_color}10`,
+                      color: config.secondary_color,
+                      border: `1px solid ${config.secondary_color}20`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = `${config.secondary_color}20`;
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = `${config.secondary_color}10`;
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {language}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Portfolio Section */}
+            <div 
+              className="rounded-2xl p-8 shadow-lg"
+              style={{ 
+                backgroundColor: config.card_background,
+                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+              }}
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: config.text_primary }}>
+                <svg className="w-6 h-6" style={{ color: config.warning_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Portfolio
+              </h2>
+              {artistData.portfolio.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {artistData.portfolio.map((item, index) => (
+                    <div 
+                      key={index}
+                      className="relative group cursor-pointer rounded-xl overflow-hidden transition-all hover:shadow-xl"
+                      style={{ boxShadow: `0 4px 15px -5px ${config.primary_color}20` }}
+                    >
+                      <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
+                      <div 
+                        className="absolute inset-0 transition-all rounded-xl"
+                        style={{ 
+                          background: `linear-gradient(to top, ${config.primary_color}80, transparent)`,
+                          opacity: 0
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                      >
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <p className="text-white font-semibold">{item.title}</p>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Media Placeholders (Showreel & Gallery) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-                <button className="h-40 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center text-gray-400 hover:bg-gray-100 transition hover:border-blue-300 group">
-                  <div className="w-10 h-10 rounded-full border-2 border-current flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                    <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 0a10 10 0 100 20 10 10 0 000-20zm-2 14.5v-9l6 4.5-6 4.5z" /></svg>
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Watch Showreel</span>
-                </button>
-
-                <button className="h-40 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center text-gray-400 hover:bg-gray-100 transition hover:border-blue-300 group">
-                  <svg className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <span className="text-[10px] font-black uppercase tracking-widest">View Gallery</span>
-                </button>
-              </div>
+              ) : (
+                <div 
+                  className="text-center py-12 rounded-xl"
+                  style={{ backgroundColor: `${config.primary_color}05` }}
+                >
+                  <p style={{ color: config.text_muted }}>Portfolio coming soon...</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sidebar Area (Right Drop) */}
-          <div className="w-full lg:w-[380px] lg:flex-shrink-0 lg:mt-6">
-            <div className="sticky top-24 space-y-4">
+          {/* Right Column - Sidebar */}
+          <div className="space-y-8">
+            {/* Booking Card */}
+            <div 
+              className="rounded-2xl p-6 shadow-lg sticky top-24"
+              style={{ 
+                backgroundColor: config.card_background,
+                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+              }}
+            >
+              <div className="text-center mb-6">
+                <div className="text-3xl font-bold mb-2" style={{ color: config.text_primary }}>{artistData.budget}</div>
+                <div className="text-sm" style={{ color: config.text_muted }}>Starting price</div>
+              </div>
 
-              {/* Main Booking Card */}
-              <div className="bg-white rounded-[2rem] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100">
-
-                {/* Price Section */}
-                <div className="flex justify-between items-start mb-8">
+              <div className="space-y-3 mb-6">
+                <div 
+                  className="flex items-center gap-3 p-3 rounded-xl"
+                  style={{ backgroundColor: `${config.success_color}10` }}
+                >
+                  <svg className="w-5 h-5" style={{ color: config.success_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Professional Fee</h3>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-gray-500 font-medium">Starts @</span>
-                      <span className="text-3xl font-black text-blue-950">Quote</span>
-                    </div>
-                  </div>
-                  <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 font-bold text-xl">
-                    $
+                    <div className="text-sm font-semibold" style={{ color: config.text_primary }}>Available</div>
+                    <div className="text-xs" style={{ color: config.text_muted }}>Ready for booking</div>
                   </div>
                 </div>
-
-                {/* Features List */}
-                <div className="space-y-3 mb-8">
-                  <div className="bg-gray-50/80 rounded-2xl p-4 flex gap-3">
-                    <svg className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <div>
-                      <div className="text-sm font-bold text-gray-900">Swift Response</div>
-                      <div className="text-xs text-gray-500 mt-0.5">Replies in less than 2 hours</div>
-                    </div>
-                  </div>
-                  <div className="bg-gray-50/80 rounded-2xl p-4 flex gap-3">
-                    <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                    <div>
-                      <div className="text-sm font-bold text-gray-900">Secure Booking</div>
-                      <div className="text-xs text-gray-500 mt-0.5">100% Payment Protection</div>
-                    </div>
+                <div 
+                  className="flex items-center gap-3 p-3 rounded-xl"
+                  style={{ backgroundColor: `${config.primary_color}10` }}
+                >
+                  <svg className="w-5 h-5" style={{ color: config.primary_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <div className="text-sm font-semibold" style={{ color: config.text_primary }}>Quick Response</div>
+                    <div className="text-xs" style={{ color: config.text_muted }}>Replies in {artistData.responseTime}</div>
                   </div>
                 </div>
-
-                {/* CTA Buttons */}
-                <div className="space-y-3">
-                  <button className="w-full py-4 bg-[#111827] text-white rounded-2xl font-bold text-sm shadow-lg hover:bg-gray-800 hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    Check Availability
-                  </button>
-                  <button className="w-full py-4 bg-white border border-gray-200 text-gray-900 rounded-2xl font-bold text-sm hover:bg-gray-50 transition-colors flex justify-center items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                    Send Inquiry
-                  </button>
-                </div>
-
-                {/* Trusted Brands */}
-                <div className="mt-8 text-center border-t border-gray-100 pt-6">
-                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Trusted By Brands</div>
-                  <div className="flex justify-center gap-4 opacity-40">
-                    <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-                    <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-                    <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+                <div 
+                  className="flex items-center gap-3 p-3 rounded-xl"
+                  style={{ backgroundColor: `${config.secondary_color}10` }}
+                >
+                  <svg className="w-5 h-5" style={{ color: config.secondary_color }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <div>
+                    <div className="text-sm font-semibold" style={{ color: config.text_primary }}>Secure Booking</div>
+                    <div className="text-xs" style={{ color: config.text_muted }}>100% payment protection</div>
                   </div>
                 </div>
               </div>
 
-              {/* Extra Badge Layout */}
-              <div className="bg-orange-50 border border-orange-100 rounded-[2rem] p-6 flex items-start gap-4">
-                <div className="text-orange-500 bg-white rounded-full p-2 shadow-sm border border-orange-100 flex-shrink-0">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM6.155 10.428a.5.5 0 01.353-.122l2.427.243.682-2.31a.5.5 0 01.956 0l.682 2.31 2.427-.243a.5.5 0 01.293.896l-1.95 1.54 1.14 2H11a.5.5 0 01-.83-.342L9 12.3l-1.17 1.745a.5.5 0 01-.83.342l1.14-2-1.95-1.54a.5.5 0 01-.035-.42zM10 5a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" /></svg>
-                </div>
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-900 mb-1">Top Tier Talent</h4>
-                  <p className="text-xs text-gray-600 font-medium leading-relaxed">This artist is among the top 5% of event hosts in Indore based on client feedback.</p>
-                </div>
+              <div className="space-y-3">
+                <button 
+                  onClick={() => setShowInquiryModal(true)}
+                  className="w-full py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                  style={{ 
+                    backgroundColor: config.primary_action,
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.boxShadow = `0 10px 30px -5px ${config.primary_action}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = `0 10px 20px -5px ${config.primary_action}30`;
+                  }}
+                >
+                  Send Inquiry
+                </button>
+                <button 
+                  className="w-full py-3 rounded-xl font-bold transition-all"
+                  style={{ 
+                    border: `1px solid ${config.primary_color}30`,
+                    color: config.text_primary,
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = `${config.primary_color}10`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  Check Availability
+                </button>
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div 
+              className="rounded-2xl p-6 shadow-lg"
+              style={{ 
+                backgroundColor: config.card_background,
+                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+              }}
+            >
+              <h3 className="text-lg font-bold mb-4" style={{ color: config.text_primary }}>Connect</h3>
+              <div className="flex gap-3">
+                <a 
+                  href={artistData.socialLinks.instagram}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
+                  style={{ backgroundColor: '#E4405F' }}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.204-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"/>
+                  </svg>
+                </a>
+                <a 
+                  href={artistData.socialLinks.facebook}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
+                  style={{ backgroundColor: '#1877F2' }}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+                <a 
+                  href={artistData.socialLinks.twitter}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
+                  style={{ backgroundColor: '#1DA1F2' }}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.006-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
+                </a>
+                <a 
+                  href={artistData.socialLinks.website}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
+                  style={{ backgroundColor: config.text_muted }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                  </svg>
+                </a>
               </div>
             </div>
           </div>
-
         </div>
       </div>
+
+      {/* Artist Inquiry Modal */}
+      {showInquiryModal && (
+        <ArtistInquiry
+          isOpen={showInquiryModal}
+          onClose={() => setShowInquiryModal(false)}
+          artist={{
+            name: artistData.name,
+            specialty: artistData.specialty,
+            category: artistData.category,
+            location: artistData.location,
+            price: artistData.budget
+          }}
+          config={config}
+        />
+      )}
     </div>
   );
 };

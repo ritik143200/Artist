@@ -20,38 +20,82 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
   const artistReviews = typeof artist.rating?.count === 'number' ? artist.rating.count : 
                       typeof artist.reviews === 'number' ? artist.reviews : 
                       0;
-  const artistPrice = artist.budgetMin && artist.budgetMax 
-    ? `₹${artist.budgetMin.toLocaleString()} - ₹${artist.budgetMax.toLocaleString()}`
-    : artist.budgetMin && !artist.budgetMax
-      ? `Starting from ₹${artist.budgetMin.toLocaleString()}`
-      : artist.budgetMax && !artist.budgetMin
-        ? `Upto ₹${artist.budgetMax.toLocaleString()}`
-        : artist.budget 
-          ? `₹${artist.budget.toLocaleString()}` 
+  // Enhanced budget handling with string conversion
+  const budgetMin = artist.budgetMin ? (typeof artist.budgetMin === 'string' ? parseInt(artist.budgetMin) : artist.budgetMin) : null;
+  const budgetMax = artist.budgetMax ? (typeof artist.budgetMax === 'string' ? parseInt(artist.budgetMax) : artist.budgetMax) : null;
+  const budget = artist.budget ? (typeof artist.budget === 'string' ? parseInt(artist.budget) : artist.budget) : null;
+
+  const artistPrice = budgetMin && budgetMax 
+    ? `₹${budgetMin.toLocaleString()} - ₹${budgetMax.toLocaleString()}`
+    : budgetMin && !budgetMax
+      ? `Starting from ₹${budgetMin.toLocaleString()}`
+      : budgetMax && !budgetMin
+        ? `Upto ₹${budgetMax.toLocaleString()}`
+        : budget 
+          ? `₹${budget.toLocaleString()}` 
           : artist.price || 'Price on request';
   
-  console.log('💰 Artist budget data:', {
-    budget: artist.budget,
-    budgetMin: artist.budgetMin,
-    budgetMax: artist.budgetMax,
-    price: artist.price,
+  console.log('💰 Enhanced budget data:', {
+    artist: artist.name || artist.fullName,
+    originalBudgetMin: artist.budgetMin,
+    originalBudgetMax: artist.budgetMax,
+    originalBudget: artist.budget,
+    convertedBudgetMin: budgetMin,
+    convertedBudgetMax: budgetMax,
+    convertedBudget: budget,
     artistPrice: artistPrice,
-    budgetType: artist.budgetMin && artist.budgetMax ? 'Range' : 
-                artist.budgetMin && !artist.budgetMax ? 'Min Only' : 
-                artist.budgetMax && !artist.budgetMin ? 'Max Only' : 
-                artist.budget ? 'Single' : 'None'
+    budgetType: budgetMin && budgetMax ? 'Range' : 
+                budgetMin && !budgetMax ? 'Min Only' : 
+                budgetMax && !budgetMin ? 'Max Only' : 
+                budget ? 'Single' : 'None',
+    budgetMinType: typeof artist.budgetMin,
+    budgetMaxType: typeof artist.budgetMax,
+    budgetTypeType: typeof artist.budget,
+    priceType: typeof artist.price
   });
   // Improved image handling
-  const artistImage = artist.profileImage || artist.image || '👤';
-  const isImageURL = typeof artistImage === 'string' && (artistImage.startsWith('http') || artistImage.startsWith('/api/'));
+  const artistImage = artist.profileImage || artist.image || 'https://picsum.photos/seed/artist-default/400/400.jpg';
+  const isImageURL = typeof artistImage === 'string' && (
+    artistImage.startsWith('http') || 
+    artistImage.startsWith('/api/') ||
+    artistImage.startsWith('data:') ||
+    artistImage.startsWith('blob:')
+  );
   const artistLocation = artist.location || 'Location not specified';
   const isVerified = artist.verificationStatus === 'verified' || artist.verified;
+
+  // Ensure config has default values
+  const themeConfig = {
+    primary_color: config?.primary_color || '#ee7711',
+    secondary_color: config?.secondary_color || '#ee7711',
+    primary_action: config?.primary_action || '#ee7711',
+    success_color: config?.success_color || '#ee7711',
+    warning_color: config?.warning_color || '#f59e0b',
+    text_primary: config?.text_primary || '#1f2937',
+    text_secondary: config?.text_secondary || '#6b7280',
+    text_muted: config?.text_muted || '#9ca3af',
+    card_background: config?.card_background || '#ffffff'
+  };
 
   // Category information
   const artistCategory = artist.category || artist.categoryName || 'Artist';
   const artistSubcategory = artist.subcategory || artist.specialty || 'Professional';
   const artistSubOptions = artist.subOptions || artist.styles || artist.skills || [];
   const artistGenre = artist.genre || artist.type || '';
+
+  // Debug category values
+  console.log('🏷️ Category Debug:', {
+    artist: artist.name || artist.fullName,
+    category: artist.category,
+    categoryName: artist.categoryName,
+    subcategory: artist.subcategory,
+    specialty: artist.specialty,
+    genre: artist.genre,
+    type: artist.type,
+    finalCategory: artistCategory,
+    finalSubcategory: artistSubcategory,
+    finalGenre: artistGenre
+  });
 
   // Return modal if open
   if (showInquiry) {
@@ -110,21 +154,39 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
           <div className="flex-1 min-w-0">
             {/* Category Breadcrumb */}
             <div className="flex items-center gap-2 mb-3">
-              <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-full">
+              <span 
+                className="px-3 py-1 text-xs font-semibold rounded-full"
+                style={{ 
+                  background: `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`,
+                  color: 'white'
+                }}
+              >
                 {artistCategory}
               </span>
-              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" style={{ color: themeConfig.text_muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+              <span 
+                className="px-3 py-1 text-xs font-semibold rounded-full"
+                style={{ 
+                  backgroundColor: `${themeConfig.secondary_color}10`,
+                  color: themeConfig.secondary_color
+                }}
+              >
                 {artistSubcategory}
               </span>
               {artistGenre && (
                 <>
-                  <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" style={{ color: themeConfig.text_muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">
+                  <span 
+                    className="px-3 py-1 text-xs font-semibold rounded-full"
+                    style={{ 
+                      backgroundColor: `${themeConfig.primary_color}10`,
+                      color: themeConfig.primary_color
+                    }}
+                  >
                     {artistGenre}
                   </span>
                 </>
@@ -134,10 +196,16 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-2xl font-bold text-gray-900 truncate">{artistName}</h3>
+                  <h3 className="text-2xl font-bold truncate" style={{ color: config.text_primary }}>{artistName}</h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {isVerified && (
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full flex items-center gap-1">
+                      <span 
+                        className="px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1"
+                        style={{ 
+                          backgroundColor: `${config.success_color}10`,
+                          color: config.success_color
+                        }}
+                      >
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -145,26 +213,46 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                       </span>
                     )}
                     {artist.trending && (
-                      <span className="px-3 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full flex items-center gap-1">
+                      <span 
+                        className="px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1"
+                        style={{ 
+                          backgroundColor: `${config.warning_color}10`,
+                          color: config.warning_color
+                        }}
+                      >
                         🔥 Trending
                       </span>
                     )}
                   </div>
                 </div>
 
-                <p className="text-lg text-gray-600 mb-3 font-medium">{artistSpecialty}</p>
+                <p className="text-lg mb-3 font-medium" style={{ color: config.text_secondary }}>{artistSpecialty}</p>
 
                 {/* Sub-options/Styles */}
                 {artistSubcategory && (
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">Specializations</p>
+                    <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: config.text_muted }}>Specializations</p>
                     <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-md flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                      <span 
+                        className="px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${config.primary_color}05, ${config.secondary_color}05)`,
+                          color: config.primary_color,
+                          border: `1px solid ${config.primary_color}20`
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.primary_color }}></span>
                         {artistSubcategory}
                       </span>
-                      <span className="px-3 py-1 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-md flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                      <span 
+                        className="px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${config.primary_color}05, ${config.secondary_color}05)`,
+                          color: config.primary_color,
+                          border: `1px solid ${config.primary_color}20`
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.primary_color }}></span>
                         Professional
                       </span>
                     </div>
@@ -174,12 +262,12 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                 <div className="flex items-center gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
-                      <span className="text-yellow-500">⭐</span>
-                      <span className="font-bold text-gray-900">{numericRating.toFixed(1)}</span>
+                      <span className="text-sm" style={{ color: config.warning_color }}>⭐</span>
+                      <span className="font-bold" style={{ color: config.text_primary }}>{artistRating.toFixed(1)}</span>
                     </div>
-                    <span className="text-gray-500">({artistReviews} reviews)</span>
+                    <span style={{ color: config.text_muted }}>({artistReviews} reviews)</span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-500">
+                  <div className="flex items-center gap-1" style={{ color: config.text_muted }}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -187,7 +275,7 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                     <span>{artistLocation}</span>
                   </div>
                   {artist.experience && (
-                    <div className="flex items-center gap-1 text-gray-500">
+                    <div className="flex items-center gap-1" style={{ color: config.text_muted }}>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -200,8 +288,19 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
               {/* Price and Action */}
               <div className="text-right flex-shrink-0 ml-6">
                 <div className="mb-2">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Starting From</p>
-                  <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                  <p className="text-xs uppercase tracking-wide font-medium mb-1" style={{ color: themeConfig.text_muted }}>Starting From</p>
+                  <div 
+                    className="text-3xl font-bold"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      color: themeConfig.primary_color, // Fallback for browsers that don't support text gradient
+                      fontSize: '1.875rem',
+                      fontWeight: '700'
+                    }}
+                  >
                     {artistPrice}
                   </div>
                 </div>
@@ -215,7 +314,26 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                         navigate('artist', { artist });
                       }
                     }}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${themeConfig.primary_action}, ${themeConfig.primary_color})`,
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '700',
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase'
+                    }}
+                    onMouseEnter={(e) => {
+                      console.log('🎨 Button hover - themeConfig:', themeConfig);
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = `0 15px 35px -5px ${themeConfig.primary_action}40`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = `0 10px 25px -5px ${themeConfig.primary_action}30`;
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${themeConfig.primary_action}, ${themeConfig.primary_color})`;
+                    }}
                   >
                     View Profile
                   </button>
@@ -227,7 +345,24 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                       setShowInquiry(true);
                       console.log('🔄 After setShowInquiry call');
                     }}
-                    className="px-6 py-2 border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-medium relative z-10"
+                    className="px-6 py-2 rounded-xl font-bold transition-all duration-300 relative z-10"
+                    style={{ 
+                      border: `2px solid ${themeConfig.primary_action}`,
+                      color: themeConfig.primary_action,
+                      backgroundColor: 'transparent',
+                      fontWeight: '600',
+                      letterSpacing: '0.3px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = `${themeConfig.primary_action}15`;
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.boxShadow = `0 8px 25px -5px ${themeConfig.primary_action}25`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     Contact
                   </button>
@@ -237,25 +372,25 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
 
             {/* Bio/Description */}
             {artist.bio && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                <p className="text-sm text-gray-600 line-clamp-2">{artist.bio}</p>
+              <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: `${config.primary_color}05` }}>
+                <p className="text-sm line-clamp-2" style={{ color: config.text_secondary }}>{artist.bio}</p>
               </div>
             )}
 
             {/* Stats Row */}
-            <div className="mt-4 flex items-center gap-8 pt-4 border-t border-gray-100">
+            <div className="mt-4 flex items-center gap-8 pt-4" style={{ borderTop: `1px solid ${config.primary_color}10` }}>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Available for bookings</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.success_color }}></div>
+                <span className="text-sm" style={{ color: config.text_secondary }}>Available for bookings</span>
               </div>
               {artist.completedEvents && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-900">{artist.completedEvents}</span> events completed
+                <div className="text-sm" style={{ color: config.text_secondary }}>
+                  <span className="font-semibold" style={{ color: config.text_primary }}>{artist.completedEvents}</span> events completed
                 </div>
               )}
               {artist.responseTime && (
-                <div className="text-sm text-gray-600">
-                  Response time: <span className="font-semibold text-gray-900">{artist.responseTime}</span>
+                <div className="text-sm" style={{ color: config.text_secondary }}>
+                  Response time: <span className="font-semibold" style={{ color: config.text_primary }}>{artist.responseTime}</span>
                 </div>
               )}
             </div>
@@ -313,21 +448,44 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1">
             <span className="text-yellow-500 text-sm">⭐</span>
-            <span className="font-bold text-sm">{numericRating.toFixed(1)}</span>
+            <span className="font-bold text-sm">{artistRating.toFixed(1)}</span>
             <span className="text-gray-400 text-xs">({artistReviews})</span>
           </div>
           <span className="text-lg font-bold text-brand-600">{artistPrice}</span>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate('artist', { artist });
-          }}
-          className="w-full py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors font-medium text-sm"
-        >
-          View Profile
-        </button>
+        <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('🔘 Profile button clicked for artist:', artist.name || artist.fullName);
+                console.log('🆔 Artist ID:', artist._id || artist.id);
+                console.log('📋 Full artist object:', artist);
+                console.log('🎨 Grid button themeConfig:', themeConfig);
+                navigate('artist', { artist });
+              }}
+              className="w-full py-2 rounded-lg font-bold text-sm transition-all hover:shadow-md transform hover:scale-105"
+              style={{ 
+                backgroundColor: themeConfig.primary_action,
+                color: 'white',
+                fontWeight: '700',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                border: 'none'
+              }}
+              onMouseEnter={(e) => {
+                console.log('🎨 Grid button hover - themeConfig.primary_action:', themeConfig.primary_action);
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.boxShadow = `0 8px 25px -5px ${themeConfig.primary_action}40`;
+                e.currentTarget.style.backgroundColor = themeConfig.primary_color;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.backgroundColor = themeConfig.primary_action;
+              }}
+            >
+              Profile
+            </button>
       </div>
     </div>
   );
@@ -339,15 +497,36 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
   
   return (
     <div 
-      onClick={() => navigate('artist', { artist })}
-      className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:border-blue-200"
+      onClick={() => {
+        console.log('🖱️ Container clicked for artist:', artist.name || artist.fullName);
+        console.log('🆔 Artist ID:', artist._id || artist.id);
+        navigate('artist', { artist });
+      }}
+      className="rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
+      style={{ 
+        backgroundColor: config.card_background,
+        border: `1px solid ${config.primary_color}10`,
+        boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 20px 40px -10px ${config.primary_color}25`;
+        e.currentTarget.style.borderColor = `${config.primary_color}30`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = `0 10px 30px -10px ${config.primary_color}15`;
+        e.currentTarget.style.borderColor = `${config.primary_color}10`;
+      }}
     >
       {/* Grid layout content */}
       <div className="flex flex-col h-full">
         {/* Artist Image */}
         <div className="relative mb-4">
           <div className="relative" style={{ width: '100%', aspectRatio: '1/1.54' }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner">
+            <div className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner"
+              style={{ 
+                background: `linear-gradient(135deg, ${config.primary_color}05, ${config.secondary_color}10)`
+              }}
+            >
               {isImageURL ? (
                 <img 
                   src={artistImage} 
@@ -368,13 +547,24 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
 
         {/* Artist Info */}
         <div className="flex-1 flex flex-col">
+          <h3 className="font-bold mb-1" style={{ color: config.text_primary }}>{artistName}</h3>
+          <p className="text-sm mb-3" style={{ color: config.text_secondary }}>{artistSpecialty}</p>
+
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1">
-              <span className="text-yellow-500 text-sm">⭐</span>
-              <span className="font-bold text-sm">{artistRating.toFixed(1)}</span>
-              <span className="text-gray-400 text-xs">({artistReviews})</span>
+              <span className="text-sm" style={{ color: themeConfig.warning_color }}>⭐</span>
+              <span className="font-bold text-sm" style={{ color: themeConfig.text_primary }}>{artistRating.toFixed(1)}</span>
+              <span className="text-xs" style={{ color: themeConfig.text_muted }}>({artistReviews})</span>
             </div>
-            <span className="text-lg font-bold text-brand-600">{artistPrice}</span>
+            <span className="text-lg font-bold" style={{ 
+              background: `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: themeConfig.primary_color, // Fallback for browsers that don't support text gradient
+              fontSize: '1.125rem',
+              fontWeight: '700'
+            }}>{artistPrice}</span>
           </div>
           
           <div className="flex flex-col gap-2">
@@ -383,7 +573,19 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                 e.stopPropagation();
                 navigate('artist', { artist });
               }}
-              className="w-full py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors font-medium text-sm"
+              className="w-full py-2 rounded-lg font-medium text-sm transition-all hover:shadow-md transform hover:scale-105"
+              style={{ 
+                backgroundColor: config.primary_action,
+                color: 'white'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.boxShadow = `0 4px 15px -5px ${config.primary_action}40`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
               View Profile
             </button>
@@ -395,7 +597,24 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                 setShowInquiry(true);
                 console.log('🔄 After setShowInquiry call (grid)');
               }}
-              className="w-full py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm relative z-10"
+              className="w-full py-2 rounded-lg font-bold text-sm transition-all hover:shadow-md transform hover:scale-105 relative z-10"
+              style={{ 
+                border: `2px solid ${themeConfig.primary_action}`,
+                color: themeConfig.primary_action,
+                backgroundColor: 'transparent',
+                fontWeight: '600',
+                letterSpacing: '0.3px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = `${themeConfig.primary_action}15`;
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.boxShadow = `0 8px 25px -5px ${themeConfig.primary_action}25`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
               Contact
             </button>

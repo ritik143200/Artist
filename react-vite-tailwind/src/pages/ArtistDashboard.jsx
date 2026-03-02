@@ -245,149 +245,185 @@ const ArtistDashboard = ({ config }) => {
     </div>
   );
 
+  const renderEarnings = () => (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <h3 className="text-xl font-bold text-gray-800 mb-6">Earnings Overview</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="text-center">
+          <div className="text-3xl font-bold text-gray-800 mb-2">₹{earnings.total.toLocaleString()}</div>
+          <p className="text-gray-600 text-sm">Total Earnings</p>
+        </div>
+        <div className="text-center">
+          <div className="text-3xl font-bold text-gray-800 mb-2">₹{earnings.thisMonth.toLocaleString()}</div>
+          <p className="text-gray-600 text-sm">This Month</p>
+        </div>
+        <div className="text-center">
+          <div className="text-3xl font-bold text-gray-800 mb-2">₹{earnings.pending.toLocaleString()}</div>
+          <p className="text-gray-600 text-sm">Pending</p>
+        </div>
+      </div>
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h4 className="text-lg font-medium text-gray-800 mb-4">Recent Transactions</h4>
+        <div className="space-y-3">
+          {bookings.slice(0, 5).map((booking) => (
+            <div key={booking.id} className="flex justify-between items-center py-3 border-b border-gray-200 last:border-0">
+              <div>
+                <div className="font-medium text-gray-800">{booking.clientName}</div>
+                <div className="text-sm text-gray-600">{booking.event}</div>
+              </div>
+              <div className="text-right">
+                <div className="font-medium text-gray-800">₹{booking.amount.toLocaleString()}</div>
+                <div className="text-sm text-gray-600">{booking.eventDate}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-full" style={{ backgroundColor: config.background_color }}>
-      {/* Add padding for fixed navbar */}
-      <div className="pt-20">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Artist Dashboard</h1>
-                  <p className="text-sm text-gray-600">Welcome back, {artistData?.name || 'Artist'}!</p>
-                  <p className="text-xs text-brand-500 mt-1">Indori Artist Platform</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button className="p-2 text-gray-600 hover:text-gray-800 transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4 4m4-4H3m2 4h6M5 12H3m2 4h6m6 4h6m2 4h6a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  Logout
-                </button>
+    <div className="min-h-full pt-20 lg:pt-24" style={{ backgroundColor: config.background_color }}>
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">Artist Dashboard</h1>
+                <p className="text-sm text-gray-600">Welcome back, {artistData?.name || 'Artist'}!</p>
+                <p className="text-xs text-brand-500 mt-1">Indori Artist Platform</p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-8">
-              {['overview', 'bookings', 'portfolio', 'profile', 'settings'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
-                      ? 'border-brand-500 text-brand-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'bookings' && renderBookings()}
-          {activeTab === 'portfolio' && renderPortfolio()}
-          {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Artist Profile</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Artist Name</label>
-                  <input
-                    type="text"
-                    defaultValue={artistData?.name || ''}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all">
-                    <option>Singer</option>
-                    <option>Dancer</option>
-                    <option>Band</option>
-                    <option>DJ</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all">
-                    <option>0-1 years</option>
-                    <option>1-3 years</option>
-                    <option>3-5 years</option>
-                    <option>5+ years</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                  <input
-                    type="text"
-                    defaultValue="Delhi, India"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                  <textarea
-                    rows={4}
-                    defaultValue="Professional artist with extensive experience in live performances and events."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
-                  />
-                </div>
-              </div>
-              <button className="mt-6 px-6 py-3 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-colors font-medium">
-                Save Changes
+            <div className="flex items-center space-x-4">
+              <button className="p-2 text-gray-600 hover:text-gray-800 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4 4m4-4H3m2 4h6M5 12H3m2 4h6m6 4h6m2 4h6a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Logout
               </button>
             </div>
-          )}
-          {activeTab === 'settings' && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Account Settings</h3>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-800">Email Notifications</h4>
-                    <p className="text-sm text-gray-600">Receive email updates about new bookings</p>
-                  </div>
-                  <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-brand-500 transition-colors">
-                    <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-800">Profile Visibility</h4>
-                    <p className="text-sm text-gray-600">Make your profile visible to potential clients</p>
-                  </div>
-                  <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-brand-500 transition-colors">
-                    <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-                  </button>
-                </div>
-                <div className="pt-4">
-                  <button className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium">
-                    Delete Account
-                  </button>
-                </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex space-x-8">
+            {['overview', 'bookings', 'portfolio', 'profile', 'settings'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
+                    ? 'border-brand-500 text-brand-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tab Content */}
+        {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'bookings' && renderBookings()}
+        {activeTab === 'portfolio' && renderPortfolio()}
+        {activeTab === 'earnings' && renderEarnings()}
+        {activeTab === 'profile' && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-6">Artist Profile</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Artist Name</label>
+                <input
+                  type="text"
+                  defaultValue={artistData?.name || ''}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all">
+                  <option>Singer</option>
+                  <option>Dancer</option>
+                  <option>Band</option>
+                  <option>DJ</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
+                <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all">
+                  <option>0-1 years</option>
+                  <option>1-3 years</option>
+                  <option>3-5 years</option>
+                  <option>5+ years</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <input
+                  type="text"
+                  defaultValue="Delhi, India"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                <textarea
+                  rows={4}
+                  defaultValue="Professional artist with extensive experience in live performances and events."
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                />
               </div>
             </div>
-          )}
-        </div>
+            <button className="mt-6 px-6 py-3 bg-brand-500 text-white rounded-xl hover:bg-brand-600 transition-colors font-medium">
+              Save Changes
+            </button>
+          </div>
+        )}
+        {activeTab === 'settings' && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-6">Account Settings</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div>
+                  <h4 className="text-lg font-medium text-gray-800">Email Notifications</h4>
+                  <p className="text-sm text-gray-600">Receive email updates about new bookings</p>
+                </div>
+                <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-brand-500 transition-colors">
+                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div>
+                  <h4 className="text-lg font-medium text-gray-800">Profile Visibility</h4>
+                  <p className="text-sm text-gray-600">Make your profile visible to potential clients</p>
+                </div>
+                <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-brand-500 transition-colors">
+                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                </button>
+              </div>
+              <div className="pt-4">
+                <button className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium">
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../contexts/RouterContext';
+import { useAuth } from '../contexts/AuthContext';
 import AuthInput from '../components/AuthInput';
 import AuthButton from '../components/AuthButton';
 
 const AuthPage = () => {
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -265,15 +267,24 @@ const AuthPage = () => {
           return;
         }
 
-        // Save user data to localStorage
+        // Save user data to localStorage and auth context
         if (data.token) {
           localStorage.setItem('userToken', data.token);
-          localStorage.setItem('userData', JSON.stringify({
+          const userData = {
             _id: data._id,
             name: data.name,
             email: data.email,
+            phone: data.phone || '',
             role: data.role
-          }));
+          };
+          
+          // Update auth context
+          login(userData);
+          
+          // Also save to localStorage for backward compatibility
+          localStorage.setItem('userData', JSON.stringify(userData));
+          
+          console.log('✅ User logged in and saved to auth context:', userData);
         }
 
         // Direct redirect based on user role

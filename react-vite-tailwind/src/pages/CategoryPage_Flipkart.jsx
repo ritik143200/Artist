@@ -507,9 +507,6 @@ const CategoryPage = ({ config }) => {
     }
     hasFetchedRef.current = true;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     const fetchArtists = async () => {
       try {
         setLoading(true);
@@ -532,42 +529,66 @@ const CategoryPage = ({ config }) => {
           }
         }
 
+        const normalizeBaseUrl = (value) => (typeof value === 'string' ? value.replace(/\/+$/, '') : '');
+
         const baseCandidates = Array.from(new Set([
-          API_BASE_URL,
-          'http://localhost:5001',
-          'http://127.0.0.1:5001'
+          normalizeBaseUrl(window.location.origin),
+          normalizeBaseUrl('http://localhost:5001'),
+          normalizeBaseUrl('http://127.0.0.1:5001'),
+          normalizeBaseUrl('http://localhost:5000'),
+          normalizeBaseUrl('http://127.0.0.1:5000'),
+          normalizeBaseUrl(API_BASE_URL),
         ].filter(Boolean)));
 
-        const endpoints = baseCandidates.flatMap((base) => [
+        const endpoints = Array.from(new Set(baseCandidates.flatMap((base) => [
           `${base}/api/artists`,
           `${base}/api/artist`
-        ]);
+        ])));
         let artistsData = null;
         let lastError = null;
 
         for (const endpoint of endpoints) {
+          const endpointController = new AbortController();
+          const endpointTimeoutId = setTimeout(() => endpointController.abort(), 7000);
+
           try {
             const response = await fetch(endpoint, {
               method: 'GET',
-              signal: controller.signal,
+              signal: endpointController.signal,
             });
 
             if (!response.ok) {
               lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+              clearTimeout(endpointTimeoutId);
               continue;
             }
 
-            const result = await response.json();
-            const payload = result?.artists || result?.data || [];
+            let result;
+            try {
+              result = await response.json();
+            } catch {
+              result = null;
+            }
 
-            if (result?.success && Array.isArray(payload)) {
+            const payload = Array.isArray(result?.artists)
+              ? result.artists
+              : Array.isArray(result?.data)
+                ? result.data
+                : Array.isArray(result)
+                  ? result
+                  : null;
+
+            if (Array.isArray(payload)) {
               artistsData = payload;
+              clearTimeout(endpointTimeoutId);
               break;
             }
 
             lastError = new Error(result?.message || 'Invalid API response format');
           } catch (endpointError) {
             lastError = endpointError;
+          } finally {
+            clearTimeout(endpointTimeoutId);
           }
         }
 
@@ -605,17 +626,11 @@ const CategoryPage = ({ config }) => {
         setArtists([]);
         setError('Unable to load artists. Please ensure backend server is running on port 5001 and try again.');
       } finally {
-        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
 
     fetchArtists();
-
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-    };
   }, [API_BASE_URL]);
 
   // Dynamic Filter-Based Artist Evaluation and Sorting

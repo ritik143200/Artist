@@ -47,16 +47,29 @@ const ArtistPage = ({ config }) => {
 
   useEffect(() => {
     const artistId = params.artistId || params.artist?._id || params.artist?.id;
+    const normalizedArtistId = artistId !== undefined && artistId !== null ? String(artistId) : '';
+    const isMongoObjectId = /^[a-fA-F0-9]{24}$/.test(normalizedArtistId);
     const controller = new AbortController();
+    const fallbackArtist = params.artist ? normalizeArtist(params.artist) : null;
 
     const fetchArtistData = async () => {
       setLoading(true);
       try {
+        if (!artistId && fallbackArtist) {
+          setArtistData(fallbackArtist);
+          return;
+        }
+
         if (!artistId) {
           throw new Error('Artist ID is missing');
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/artists/${encodeURIComponent(String(artistId))}`, {
+        if (!isMongoObjectId && fallbackArtist) {
+          setArtistData(fallbackArtist);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/artists/${encodeURIComponent(normalizedArtistId)}`, {
           signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
@@ -80,7 +93,12 @@ const ArtistPage = ({ config }) => {
         if (error?.name !== 'AbortError') {
           console.error('Error fetching artist data:', error);
         }
-        setArtistData(null);
+
+        if (fallbackArtist) {
+          setArtistData(fallbackArtist);
+        } else {
+          setArtistData(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -120,7 +138,21 @@ const ArtistPage = ({ config }) => {
     );
   }
 
-  const isImageURL = typeof artistData.image === 'string' && (artistData.image.startsWith('http') || artistData.image.startsWith('/api/') || artistData.image.startsWith('blob:'));
+  const isImageURL = typeof artistData.image === 'string' && (
+  artistData.image.startsWith('http') || 
+  artistData.image.startsWith('/api/') || 
+  artistData.image.startsWith('blob:') ||
+  artistData.image.startsWith('data:')
+);
+
+// Debug image handling
+console.log('🖼️ Artist Image Debug:', {
+  artistData,
+  image: artistData.image,
+  isImageURL,
+  imageType: typeof artistData.image,
+  imageStartsWith: artistData.image?.substring(0, 20)
+});
 
   return (
     <div className="pt-24 pb-16 min-h-full" style={{ backgroundColor: config.background_color }}>
@@ -163,11 +195,30 @@ const ArtistPage = ({ config }) => {
                   style={{ backgroundColor: config.background_color }}
                 >
                   <div className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: config.card_background }}>
-                    {isImageURL ? (
-                      <img src={artistData.image} alt={artistData.name} className="w-full h-full object-cover" />
-                    ) : (
+                    {isImageURL && artistData.image ? (
+                      <img 
+                        src={artistData.image} 
+                        alt={artistData.name} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('❌ Image failed to load:', artistData.image);
+                          e.target.style.display = 'none';
+                          e.target.nextElementSibling.style.display = 'flex';
+                        }}
+                        onLoad={() => {
+                          console.log('✅ Image loaded successfully:', artistData.image);
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ 
+                        display: (isImageURL && artistData.image) ? 'none' : 'flex',
+                        backgroundColor: config.card_background 
+                      }}
+                    >
                       <span className="text-5xl">🎭</span>
-                    )}
+                    </div>
                   </div>
                 </div>
                 {artistData.verified && (
@@ -259,10 +310,11 @@ const ArtistPage = ({ config }) => {
           <div className="lg:col-span-2 space-y-8">
             {/* About Section */}
             <div 
-              className="rounded-2xl p-8 shadow-lg"
+              className="rounded-2xl p-8 shadow-lg border"
               style={{ 
-                backgroundColor: config.card_background,
-                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+                backgroundColor: config.surface_color,
+                borderColor: config.primary_action + '20',
+                boxShadow: `0 10px 30px -10px ${config.primary_action}15`
               }}
             >
               <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: config.text_primary }}>
@@ -309,10 +361,11 @@ const ArtistPage = ({ config }) => {
 
             {/* Skills Section */}
             <div 
-              className="rounded-2xl p-8 shadow-lg"
+              className="rounded-2xl p-8 shadow-lg border"
               style={{ 
-                backgroundColor: config.card_background,
-                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+                backgroundColor: config.surface_color,
+                borderColor: config.primary_action + '20',
+                boxShadow: `0 10px 30px -10px ${config.primary_action}15`
               }}
             >
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: config.text_primary }}>
@@ -325,18 +378,18 @@ const ArtistPage = ({ config }) => {
                 {artistData.skills.map((skill, index) => (
                   <span 
                     key={index}
-                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md"
+                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md border"
                     style={{ 
-                      background: `linear-gradient(135deg, ${config.primary_color}10, ${config.secondary_color}10)`,
-                      color: config.text_primary,
-                      border: `1px solid ${config.primary_color}20`
+                      backgroundColor: config.surface_color,
+                      color: config.primary_action,
+                      borderColor: config.primary_action + '30'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${config.primary_color}20, ${config.secondary_color}20)`;
+                      e.currentTarget.style.backgroundColor = config.primary_action + '10';
                       e.currentTarget.style.transform = 'translateY(-2px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${config.primary_color}10, ${config.secondary_color}10)`;
+                      e.currentTarget.style.backgroundColor = config.surface_color;
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
@@ -348,10 +401,11 @@ const ArtistPage = ({ config }) => {
 
             {/* Languages Section */}
             <div 
-              className="rounded-2xl p-8 shadow-lg"
+              className="rounded-2xl p-8 shadow-lg border"
               style={{ 
-                backgroundColor: config.card_background,
-                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+                backgroundColor: config.surface_color,
+                borderColor: config.primary_action + '20',
+                boxShadow: `0 10px 30px -10px ${config.primary_action}15`
               }}
             >
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: config.text_primary }}>
@@ -364,18 +418,18 @@ const ArtistPage = ({ config }) => {
                 {artistData.languages.map((language, index) => (
                   <span 
                     key={index}
-                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md"
+                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md border"
                     style={{ 
-                      backgroundColor: `${config.secondary_color}10`,
-                      color: config.secondary_color,
-                      border: `1px solid ${config.secondary_color}20`
+                      backgroundColor: config.surface_color,
+                      color: config.secondary_action,
+                      borderColor: config.secondary_action + '30'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `${config.secondary_color}20`;
+                      e.currentTarget.style.backgroundColor = config.secondary_action + '10';
                       e.currentTarget.style.transform = 'translateY(-2px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = `${config.secondary_color}10`;
+                      e.currentTarget.style.backgroundColor = config.surface_color;
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
@@ -387,10 +441,11 @@ const ArtistPage = ({ config }) => {
 
             {/* Portfolio Section */}
             <div 
-              className="rounded-2xl p-8 shadow-lg"
+              className="rounded-2xl p-8 shadow-lg border"
               style={{ 
-                backgroundColor: config.card_background,
-                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+                backgroundColor: config.surface_color,
+                borderColor: config.primary_action + '20',
+                boxShadow: `0 10px 30px -10px ${config.primary_action}15`
               }}
             >
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: config.text_primary }}>
@@ -439,14 +494,15 @@ const ArtistPage = ({ config }) => {
           <div className="space-y-8">
             {/* Booking Card */}
             <div 
-              className="rounded-2xl p-6 shadow-lg sticky top-24"
+              className="rounded-2xl p-6 shadow-lg border sticky top-24"
               style={{ 
-                backgroundColor: config.card_background,
-                boxShadow: `0 10px 30px -10px ${config.primary_color}15`
+                backgroundColor: config.surface_color,
+                borderColor: config.primary_action + '20',
+                boxShadow: `0 10px 30px -10px ${config.primary_action}15`
               }}
             >
               <div className="text-center mb-6">
-                <div className="text-3xl font-bold mb-2" style={{ color: config.text_primary }}>{artistData.budget}</div>
+                <div className="text-3xl font-bold mb-2" style={{ color: config.primary_action }}>{artistData.budget}</div>
                 <div className="text-sm" style={{ color: config.text_muted }}>Starting price</div>
               </div>
 

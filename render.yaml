@@ -26,7 +26,6 @@ services:
   - type: web
     name: artisthub-frontend
     env: static
-    region: singapore
     rootDir: react-vite-tailwind
     buildCommand: npm install && npm run build
     staticPublishPath: dist

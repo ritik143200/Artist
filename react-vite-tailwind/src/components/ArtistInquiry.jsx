@@ -7,14 +7,14 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
   const { user } = useAuth();
   console.log('🎯 ArtistInquiry component rendered for:', artist.fullName || artist.name);
   console.log('👤 Logged-in user:', user);
-  
+
   // Use real logged-in user data from auth context
   const loggedInUser = user || {
     name: '',
     email: '',
     phone: ''
   };
-  
+
   const [formData, setFormData] = useState({
     name: loggedInUser.name || '',
     email: loggedInUser.email || '',
@@ -30,10 +30,10 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
   const [submitted, setSubmitted] = useState(false);
 
   // Handle both backend and mock data structures
-  const artistName = artist.fullName || 
-                     `${artist.firstName || ''} ${artist.lastName || ''}`.trim() || 
-                     artist.name || 
-                     'Artist Name';
+  const artistName = artist.fullName ||
+    `${artist.firstName || ''} ${artist.lastName || ''}`.trim() ||
+    artist.name ||
+    'Artist Name';
   const artistCategory = artist.category || artist.categoryName || 'Artist';
   const artistSpecialty = artist.subcategory || artist.specialty || artist.skills?.[0] || 'Professional Artist';
   const artistPrice = artist.budget ? `₹${artist.budget.toLocaleString()}` : artist.price || 'Price on request';
@@ -54,7 +54,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Word count validation for event type (max 30 words)
     if (name === 'eventType') {
       const words = value.trim().split(/\s+/).filter(word => word.length > 0);
@@ -62,7 +62,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
         return; // Don't update if exceeds 30 words
       }
     }
-    
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -80,23 +80,46 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('📨 Inquiry submitted:', {
-        artist: artistName,
-        ...formData
+      const payload = {
+        artistId: artist._id || artist.id,
+        userId: user._id || user.id,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        eventType: formData.eventType,
+        eventDate: formData.eventDate,
+        budget: formData.budget,
+        eventLocation: formData.eventLocation,
+        requirements: formData.requirements,
+        message: formData.message
+      };
+
+      const response = await fetch('http://localhost:5001/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
       });
-      
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit inquiry');
+      }
+
+      console.log('📨 Inquiry submitted:', data);
+
       setSubmitted(true);
-      
+
       // Auto close after 3 seconds
       setTimeout(() => {
         onClose();
       }, 3000);
-      
+
     } catch (error) {
       console.error('❌ Error submitting inquiry:', error);
+      alert(error.message);
     } finally {
       setLoading(false);
     }
@@ -134,7 +157,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
               <h2 className="text-2xl font-bold text-gray-900">Send Inquiry</h2>
               <p className="text-gray-600 mt-1">Contact {artistName} for your event</p>
             </div>
-            
+
             {/* Right Side - Artist Information */}
             <div className="flex items-center gap-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-xl">
@@ -160,7 +183,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Close Button */}
             <button
               onClick={onClose}
@@ -217,19 +240,17 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                 ].map((category, index) => (
                   <button
                     key={index}
-                    className={`group relative overflow-hidden rounded-xl p-4 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg ${
-                      artistCategory?.toLowerCase() === category.name.toLowerCase()
-                        ? 'bg-gradient-to-br ' + category.color + ' text-white shadow-lg'
-                        : 'bg-white border border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`group relative overflow-hidden rounded-xl p-4 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg ${artistCategory?.toLowerCase() === category.name.toLowerCase()
+                      ? 'bg-gradient-to-br ' + category.color + ' text-white shadow-lg'
+                      : 'bg-white border border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <div className="relative z-10">
                       <div className="text-2xl mb-2">{category.icon}</div>
-                      <div className={`text-xs font-bold ${
-                        artistCategory?.toLowerCase() === category.name.toLowerCase()
-                          ? 'text-white'
-                          : 'text-gray-700 group-hover:text-gray-900'
-                      }`}>
+                      <div className={`text-xs font-bold ${artistCategory?.toLowerCase() === category.name.toLowerCase()
+                        ? 'text-white'
+                        : 'text-gray-700 group-hover:text-gray-900'
+                        }`}>
                         {category.name}
                       </div>
                     </div>
@@ -322,7 +343,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                         <h3 className="font-bold text-gray-900 text-lg">Your Information</h3>
                         <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-transparent"></div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="group">
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -394,8 +415,10 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                               type="tel"
                               name="phone"
                               value={formData.phone}
-                              disabled
-                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed font-medium transition-all group-hover:border-gray-300"
+                              onChange={handleInputChange}
+                              required
+                              disabled={!!loggedInUser.phone}
+                              className={`w-full px-4 py-3 border-2 rounded-xl font-medium transition-all ${loggedInUser.phone ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed group-hover:border-gray-300' : 'border-gray-200 bg-white group-hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'}`}
                               placeholder="+91 98765 43210"
                             />
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -427,7 +450,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                         <h3 className="font-bold text-gray-900 text-lg">Event Details</h3>
                         <div className="flex-1 h-px bg-gradient-to-r from-purple-200 to-transparent"></div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="group">
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -449,7 +472,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                               Words used: <span className="font-bold text-purple-600">{formData.eventType.trim().split(/\s+/).filter(word => word.length > 0).length}</span> / 30
                             </p>
                             <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
+                              <div
                                 className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-300"
                                 style={{ width: `${Math.min((formData.eventType.trim().split(/\s+/).filter(word => word.length > 0).length / 30) * 100, 100)}%` }}
                               ></div>
@@ -493,6 +516,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                                   name="budget"
                                   value={formData.budget}
                                   onChange={handleInputChange}
+                                  required
                                   min="0"
                                   step="500"
                                   className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all font-medium"
@@ -544,17 +568,16 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                       <h3 className="font-bold text-gray-900 text-lg">Additional Requirements</h3>
                       <div className="flex-1 h-px bg-gradient-to-r from-green-200 to-transparent"></div>
                     </div>
-                    
+
                     <div className="bg-green-50/30 border border-green-100/60 rounded-xl p-4">
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {commonRequirements.map(requirement => (
                           <label
                             key={requirement}
-                            className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all group ${
-                              formData.requirements.includes(requirement)
-                                ? 'border-green-500 bg-gradient-to-r from-green-50 to-green-100 text-green-700 shadow-sm'
-                                : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
-                            }`}
+                            className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all group ${formData.requirements.includes(requirement)
+                              ? 'border-green-500 bg-gradient-to-r from-green-50 to-green-100 text-green-700 shadow-sm'
+                              : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -585,7 +608,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                       <h3 className="font-bold text-gray-900 text-lg">Additional Message</h3>
                       <div className="flex-1 h-px bg-gradient-to-r from-orange-200 to-transparent"></div>
                     </div>
-                    
+
                     <div className="bg-orange-50/30 border border-orange-100/60 rounded-xl p-4">
                       <textarea
                         name="message"
@@ -647,7 +670,7 @@ const ArtistInquiry = ({ isOpen, onClose, artist, config }) => {
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                   </button>
                 </div>
-                
+
                 {/* Security & Trust Badges */}
                 <div className="mt-4 flex items-center justify-center gap-6 text-xs text-gray-500">
                   <div className="flex items-center gap-1">

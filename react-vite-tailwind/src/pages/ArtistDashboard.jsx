@@ -20,51 +20,113 @@ const ArtistDashboard = ({ config }) => {
       setArtistData(JSON.parse(storedUser));
     }
 
-    // Load mock data
-    setBookings([
-      {
-        id: 1,
-        clientName: 'Rahul Sharma',
-        eventDate: '2024-03-15',
-        status: 'confirmed',
-        amount: 25000,
-        event: 'Wedding Reception',
-        location: 'Delhi'
-      },
-      {
-        id: 2,
-        clientName: 'Priya Patel',
-        eventDate: '2024-04-20',
-        status: 'pending',
-        amount: 15000,
-        event: 'Birthday Party',
-        location: 'Mumbai'
-      },
-      {
-        id: 3,
-        clientName: 'Amit Kumar',
-        eventDate: '2024-02-28',
-        status: 'completed',
-        amount: 20000,
-        event: 'Corporate Event',
-        location: 'Bangalore'
+    const fetchArtistData = async () => {
+      try {
+        const bookingsRes = await fetch('http://localhost:5001/api/bookings/artist', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+        });
+        if (bookingsRes.ok) {
+          const fetchedBookings = await bookingsRes.json();
+          setBookings(fetchedBookings);
+
+          // Calculate Dynamic Earnings
+          let calcTotal = 0;
+          let calcThisMonth = 0;
+          let calcPending = 0;
+
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+
+          fetchedBookings.forEach(b => {
+            const bAmount = b.budget || b.amount || 0;
+            if (b.status === 'completed') {
+              calcTotal += bAmount;
+              const dateObj = new Date(b.eventDate || b.date);
+              if (dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear) {
+                calcThisMonth += bAmount;
+              }
+            } else if (b.status === 'accepted' || b.status === 'adminApproved') {
+              calcPending += bAmount;
+            }
+          });
+
+          setEarnings({
+            total: calcTotal,
+            thisMonth: calcThisMonth,
+            pending: calcPending
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching artist dashboard data:', error);
       }
-    ]);
+    };
+
+    fetchArtistData();
 
     setPortfolio([
       { id: 1, title: 'Wedding Performance', type: 'video', thumbnail: '🎵', date: '2024-01-15' },
       { id: 2, title: 'Concert Highlights', type: 'image', thumbnail: '🎸', date: '2024-02-10' },
       { id: 3, title: 'Studio Session', type: 'video', thumbnail: '🎤', date: '2024-03-01' }
     ]);
-
-    setEarnings({
-      total: 125000,
-      thisMonth: 35000,
-      pending: 40000
-    });
   }, []);
 
+  const handleBookingAction = async (bookingId, action) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/bookings/artist/${bookingId}/${action}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Refresh bookings and earnings
+        const bookingsRes = await fetch('http://localhost:5001/api/bookings/artist', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+        });
+        if (bookingsRes.ok) {
+          const fetchedBookings = await bookingsRes.json();
+          setBookings(fetchedBookings);
+
+          // Recalculate Dynamic Earnings
+          let calcTotal = 0;
+          let calcThisMonth = 0;
+          let calcPending = 0;
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+
+          fetchedBookings.forEach(b => {
+            const bAmount = b.budget || b.amount || 0;
+            if (b.status === 'completed') {
+              calcTotal += bAmount;
+              const dateObj = new Date(b.eventDate || b.date);
+              if (dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear) {
+                calcThisMonth += bAmount;
+              }
+            } else if (b.status === 'accepted' || b.status === 'adminApproved') {
+              calcPending += bAmount;
+            }
+          });
+
+          setEarnings({
+            total: calcTotal,
+            thisMonth: calcThisMonth,
+            pending: calcPending
+          });
+        }
+      } else {
+        const errData = await response.json();
+        alert(errData.message || 'Failed to update booking status');
+      }
+    } catch (error) {
+      console.error(`Error performing action ${action}:`, error);
+      alert('Network error occurred while updating booking.');
+    }
+  };
+
   const handleLogout = () => {
+
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
     navigate('home');
@@ -141,41 +203,59 @@ const ArtistDashboard = ({ config }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {bookings.map((booking) => (
-              <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{booking.clientName}</div>
+            {bookings.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                  You have no booking requests yet.
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-600">{booking.event}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-600">{booking.eventDate}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-600">{booking.location}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">₹{booking.amount.toLocaleString()}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === 'confirmed'
+              </tr>
+            ) : (
+              bookings.map((booking, index) => (
+                <tr key={booking._id || booking.id || index} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{booking.userId?.name || booking.name || 'Unknown Client'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">{booking.eventType || booking.event}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">{new Date(booking.eventDate || booking.date).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">{booking.eventLocation || booking.location}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">₹{(booking.budget || booking.amount || 0).toLocaleString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${['confirmed'].includes(booking.status)
                       ? 'bg-green-100 text-green-800'
                       : booking.status === 'completed'
                         ? 'bg-blue-100 text-blue-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {booking.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-brand-600 hover:text-brand-900 mr-3">View</button>
-                  {booking.status === 'pending' && (
-                    <button className="text-green-600 hover:text-green-900">Accept</button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                        : ['rejected', 'artistRejected'].includes(booking.status)
+                          ? 'bg-red-100 text-red-800'
+                          : booking.status === 'adminApproved'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                      {booking.status === 'adminApproved' ? 'New Request' : booking.status === 'artistRejected' ? 'Declined' : booking.status === 'confirmed' ? 'Confirmed' : (booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Unknown')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-3">
+                    <button className="text-brand-600 hover:text-brand-900">View</button>
+                    {booking.status === 'adminApproved' && (
+                      <>
+                        <button onClick={() => { if (window.confirm('Accept this booking?')) handleBookingAction(booking._id || booking.id, 'accept') }} className="text-green-600 hover:text-green-900">Accept</button>
+                        <button onClick={() => { if (window.confirm('Decline this booking?')) handleBookingAction(booking._id || booking.id, 'decline') }} className="text-red-600 hover:text-red-900">Decline</button>
+                      </>
+                    )}
+                    {booking.status === 'confirmed' && (
+                      <button onClick={() => { if (window.confirm('Mark this job as completed?')) handleBookingAction(booking._id || booking.id, 'complete') }} className="text-blue-600 hover:text-blue-900 font-bold">Complete Job</button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -203,8 +283,8 @@ const ArtistDashboard = ({ config }) => {
             <p className="text-gray-600 text-sm mb-4">{item.date}</p>
             <div className="flex items-center justify-between">
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.type === 'video'
-                  ? 'bg-purple-100 text-purple-800'
-                  : 'bg-blue-100 text-blue-800'
+                ? 'bg-purple-100 text-purple-800'
+                : 'bg-blue-100 text-blue-800'
                 }`}>
                 {item.type}
               </span>
@@ -324,8 +404,8 @@ const ArtistDashboard = ({ config }) => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
-                    ? 'border-brand-500 text-brand-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-brand-500 text-brand-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}

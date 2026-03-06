@@ -1,35 +1,37 @@
 import { useRouter } from '../contexts/RouterContext';
+import { useAuth } from '../contexts/AuthContext';
 import { artists } from '../data/mockData';
 import { useState, useEffect } from 'react';
 import ArtistInquiry from '../components/ArtistInquiry';
 
 const ArtistPage = ({ config }) => {
   const { params, navigate } = useRouter();
+  const { isAuthenticated } = useAuth();
   const [artistData, setArtistData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
 
   // Get artist from params or mock data
   let artist = params.artist || artists[0];
-  
+
   // Extract artist ID from URL params if available
   const artistId = params.artistId || artist._id || artist.id;
-  
+
   console.log('🎨 ArtistPage rendered with:');
   console.log('📋 Params:', params);
   console.log('🆔 ArtistId:', artistId);
   console.log('👤 Artist object:', artist);
-  
+
   // If we have artistId but no artist object, find artist by ID
   if (!params.artist && artistId) {
     // Handle both mock data IDs (numbers) and MongoDB IDs (strings)
-    artist = artists.find(a => 
-      a._id === artistId || 
-      a.id === artistId || 
+    artist = artists.find(a =>
+      a._id === artistId ||
+      a.id === artistId ||
       a.id === parseInt(artistId) ||
       String(a.id) === String(artistId)
     );
-    
+
     // If no artist found with the given ID, it means it's a MongoDB ID
     // In that case, we need to fetch from backend or use the first artist as fallback
     if (!artist) {
@@ -48,13 +50,13 @@ const ArtistPage = ({ config }) => {
       try {
         // Simulate API call to MongoDB
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         let fetchedArtist;
-        
+
         // If we have a MongoDB ID (24-character hex string), simulate fetching from MongoDB
         if (artistId && artistId.length === 24 && /^[0-9a-fA-F]{24}$/.test(artistId)) {
           console.log('🔗 Fetching artist from MongoDB with ID:', artistId);
-          
+
           // Simulate MongoDB artist data
           fetchedArtist = {
             _id: artistId,
@@ -94,7 +96,7 @@ const ArtistPage = ({ config }) => {
             verified: true,
             trending: true
           };
-          
+
           console.log('✅ MongoDB artist data fetched:', fetchedArtist);
         } else {
           // Handle both backend and mock data structures
@@ -108,14 +110,14 @@ const ArtistPage = ({ config }) => {
           category: fetchedArtist.category || 'Entertainment',
           rating: Number(fetchedArtist.rating?.average || fetchedArtist.rating || 0),
           reviews: fetchedArtist.rating?.count || fetchedArtist.reviews || 0,
-          budget: fetchedArtist.budgetMin && fetchedArtist.budgetMax 
-            ? `₹${fetchedArtist.budgetMin.toLocaleString()} - ₹${fetchedArtist.budgetMax.toLocaleString()}` 
+          budget: fetchedArtist.budgetMin && fetchedArtist.budgetMax
+            ? `₹${fetchedArtist.budgetMin.toLocaleString()} - ₹${fetchedArtist.budgetMax.toLocaleString()}`
             : fetchedArtist.budgetMin && !fetchedArtist.budgetMax
-              ? `Starting from ₹${fetchedArtist.budgetMin.toLocaleString()}` 
+              ? `Starting from ₹${fetchedArtist.budgetMin.toLocaleString()}`
               : fetchedArtist.budgetMax && !fetchedArtist.budgetMin
-                ? `Upto ₹${fetchedArtist.budgetMax.toLocaleString()}` 
-                : fetchedArtist.budget 
-                  ? `₹${fetchedArtist.budget.toLocaleString()}` 
+                ? `Upto ₹${fetchedArtist.budgetMax.toLocaleString()}`
+                : fetchedArtist.budget
+                  ? `₹${fetchedArtist.budget.toLocaleString()}`
                   : fetchedArtist.price || 'Price on request',
           location: fetchedArtist.location || 'Location not specified',
           bio: fetchedArtist.bio || fetchedArtist.description || 'No bio available for this artist.',
@@ -135,7 +137,7 @@ const ArtistPage = ({ config }) => {
           verified: fetchedArtist.verified || false,
           trending: fetchedArtist.trending || false
         };
-        
+
         setArtistData(processedArtist);
       } catch (error) {
         console.error('Error fetching artist data:', error);
@@ -163,7 +165,7 @@ const ArtistPage = ({ config }) => {
       <div className="pt-24 pb-16 min-h-full flex items-center justify-center" style={{ backgroundColor: config.background_color }}>
         <div className="text-center">
           <p className="text-gray-600">Artist not found</p>
-          <button 
+          <button
             onClick={() => navigate('home')}
             className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
@@ -194,9 +196,9 @@ const ArtistPage = ({ config }) => {
         </button>
 
         {/* Hero Section */}
-        <div 
+        <div
           className="relative rounded-3xl overflow-hidden shadow-2xl mb-8"
-          style={{ 
+          style={{
             background: `linear-gradient(135deg, ${config.primary_color} 0%, ${config.secondary_color} 100%)`,
             boxShadow: `0 20px 40px -10px ${config.primary_color}20`
           }}
@@ -207,12 +209,12 @@ const ArtistPage = ({ config }) => {
             alt="Artist Background"
             className="w-full h-64 object-cover opacity-30"
           />
-          
+
           <div className="relative z-10 p-8">
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* Profile Image */}
               <div className="flex-shrink-0">
-                <div 
+                <div
                   className="w-32 h-32 rounded-2xl p-2 shadow-lg"
                   style={{ backgroundColor: config.background_color }}
                 >
@@ -225,9 +227,9 @@ const ArtistPage = ({ config }) => {
                   </div>
                 </div>
                 {artistData.verified && (
-                  <div 
+                  <div
                     className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-white border-2 shadow-lg"
-                    style={{ 
+                    style={{
                       backgroundColor: config.success_color,
                       borderColor: config.background_color
                     }}
@@ -244,9 +246,9 @@ const ArtistPage = ({ config }) => {
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
                   <h1 className="text-4xl font-bold text-white">{artistData.name}</h1>
                   {artistData.verified && (
-                    <span 
+                    <span
                       className="px-3 py-1 text-xs font-bold rounded-full"
-                      style={{ 
+                      style={{
                         backgroundColor: config.success_color,
                         color: 'white'
                       }}
@@ -255,7 +257,7 @@ const ArtistPage = ({ config }) => {
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-white/90 mb-4">
                   <span className="font-semibold text-lg">{artistData.specialty}</span>
                   <span className="w-1 h-1 rounded-full bg-white/50"></span>
@@ -284,10 +286,16 @@ const ArtistPage = ({ config }) => {
 
               {/* CTA Button */}
               <div className="flex-shrink-0">
-                <button 
-                  onClick={() => setShowInquiryModal(true)}
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('auth');
+                      return;
+                    }
+                    setShowInquiryModal(true);
+                  }}
                   className="px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-                  style={{ 
+                  style={{
                     backgroundColor: config.primary_action,
                     color: 'white'
                   }}
@@ -312,9 +320,9 @@ const ArtistPage = ({ config }) => {
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About Section */}
-            <div 
+            <div
               className="rounded-2xl p-8 shadow-lg"
-              style={{ 
+              style={{
                 backgroundColor: config.card_background,
                 boxShadow: `0 10px 30px -10px ${config.primary_color}15`
               }}
@@ -328,30 +336,30 @@ const ArtistPage = ({ config }) => {
               <p className="leading-relaxed mb-6" style={{ color: config.text_secondary }}>
                 {artistData.bio}
               </p>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div 
+                <div
                   className="text-center p-4 rounded-xl"
                   style={{ backgroundColor: `${config.primary_color}10` }}
                 >
                   <div className="text-2xl font-bold" style={{ color: config.primary_color }}>{artistData.experience}</div>
                   <div className="text-sm" style={{ color: config.text_muted }}>Experience</div>
                 </div>
-                <div 
+                <div
                   className="text-center p-4 rounded-xl"
                   style={{ backgroundColor: `${config.success_color}10` }}
                 >
                   <div className="text-2xl font-bold" style={{ color: config.success_color }}>{artistData.languages.length}</div>
                   <div className="text-sm" style={{ color: config.text_muted }}>Languages</div>
                 </div>
-                <div 
+                <div
                   className="text-center p-4 rounded-xl"
                   style={{ backgroundColor: `${config.secondary_color}10` }}
                 >
                   <div className="text-2xl font-bold" style={{ color: config.secondary_color }}>{artistData.skills.length}</div>
                   <div className="text-sm" style={{ color: config.text_muted }}>Skills</div>
                 </div>
-                <div 
+                <div
                   className="text-center p-4 rounded-xl"
                   style={{ backgroundColor: `${config.warning_color}10` }}
                 >
@@ -362,9 +370,9 @@ const ArtistPage = ({ config }) => {
             </div>
 
             {/* Skills Section */}
-            <div 
+            <div
               className="rounded-2xl p-8 shadow-lg"
-              style={{ 
+              style={{
                 backgroundColor: config.card_background,
                 boxShadow: `0 10px 30px -10px ${config.primary_color}15`
               }}
@@ -377,10 +385,10 @@ const ArtistPage = ({ config }) => {
               </h2>
               <div className="flex flex-wrap gap-3">
                 {artistData.skills.map((skill, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md"
-                    style={{ 
+                    style={{
                       background: `linear-gradient(135deg, ${config.primary_color}10, ${config.secondary_color}10)`,
                       color: config.text_primary,
                       border: `1px solid ${config.primary_color}20`
@@ -401,9 +409,9 @@ const ArtistPage = ({ config }) => {
             </div>
 
             {/* Languages Section */}
-            <div 
+            <div
               className="rounded-2xl p-8 shadow-lg"
-              style={{ 
+              style={{
                 backgroundColor: config.card_background,
                 boxShadow: `0 10px 30px -10px ${config.primary_color}15`
               }}
@@ -416,10 +424,10 @@ const ArtistPage = ({ config }) => {
               </h2>
               <div className="flex flex-wrap gap-3">
                 {artistData.languages.map((language, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md"
-                    style={{ 
+                    style={{
                       backgroundColor: `${config.secondary_color}10`,
                       color: config.secondary_color,
                       border: `1px solid ${config.secondary_color}20`
@@ -440,9 +448,9 @@ const ArtistPage = ({ config }) => {
             </div>
 
             {/* Portfolio Section */}
-            <div 
+            <div
               className="rounded-2xl p-8 shadow-lg"
-              style={{ 
+              style={{
                 backgroundColor: config.card_background,
                 boxShadow: `0 10px 30px -10px ${config.primary_color}15`
               }}
@@ -456,15 +464,15 @@ const ArtistPage = ({ config }) => {
               {artistData.portfolio.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {artistData.portfolio.map((item, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="relative group cursor-pointer rounded-xl overflow-hidden transition-all hover:shadow-xl"
                       style={{ boxShadow: `0 4px 15px -5px ${config.primary_color}20` }}
                     >
                       <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
-                      <div 
+                      <div
                         className="absolute inset-0 transition-all rounded-xl"
-                        style={{ 
+                        style={{
                           background: `linear-gradient(to top, ${config.primary_color}80, transparent)`,
                           opacity: 0
                         }}
@@ -479,7 +487,7 @@ const ArtistPage = ({ config }) => {
                   ))}
                 </div>
               ) : (
-                <div 
+                <div
                   className="text-center py-12 rounded-xl"
                   style={{ backgroundColor: `${config.primary_color}05` }}
                 >
@@ -492,9 +500,9 @@ const ArtistPage = ({ config }) => {
           {/* Right Column - Sidebar */}
           <div className="space-y-8">
             {/* Booking Card */}
-            <div 
+            <div
               className="rounded-2xl p-6 shadow-lg sticky top-24"
-              style={{ 
+              style={{
                 backgroundColor: config.card_background,
                 boxShadow: `0 10px 30px -10px ${config.primary_color}15`
               }}
@@ -505,7 +513,7 @@ const ArtistPage = ({ config }) => {
               </div>
 
               <div className="space-y-3 mb-6">
-                <div 
+                <div
                   className="flex items-center gap-3 p-3 rounded-xl"
                   style={{ backgroundColor: `${config.success_color}10` }}
                 >
@@ -517,7 +525,7 @@ const ArtistPage = ({ config }) => {
                     <div className="text-xs" style={{ color: config.text_muted }}>Ready for booking</div>
                   </div>
                 </div>
-                <div 
+                <div
                   className="flex items-center gap-3 p-3 rounded-xl"
                   style={{ backgroundColor: `${config.primary_color}10` }}
                 >
@@ -529,7 +537,7 @@ const ArtistPage = ({ config }) => {
                     <div className="text-xs" style={{ color: config.text_muted }}>Replies in {artistData.responseTime}</div>
                   </div>
                 </div>
-                <div 
+                <div
                   className="flex items-center gap-3 p-3 rounded-xl"
                   style={{ backgroundColor: `${config.secondary_color}10` }}
                 >
@@ -544,10 +552,16 @@ const ArtistPage = ({ config }) => {
               </div>
 
               <div className="space-y-3">
-                <button 
-                  onClick={() => setShowInquiryModal(true)}
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('auth');
+                      return;
+                    }
+                    setShowInquiryModal(true);
+                  }}
                   className="w-full py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-                  style={{ 
+                  style={{
                     backgroundColor: config.primary_action,
                     color: 'white'
                   }}
@@ -562,9 +576,9 @@ const ArtistPage = ({ config }) => {
                 >
                   Send Inquiry
                 </button>
-                <button 
+                <button
                   className="w-full py-3 rounded-xl font-bold transition-all"
-                  style={{ 
+                  style={{
                     border: `1px solid ${config.primary_color}30`,
                     color: config.text_primary,
                     backgroundColor: 'transparent'
@@ -582,43 +596,43 @@ const ArtistPage = ({ config }) => {
             </div>
 
             {/* Social Links */}
-            <div 
+            <div
               className="rounded-2xl p-6 shadow-lg"
-              style={{ 
+              style={{
                 backgroundColor: config.card_background,
                 boxShadow: `0 10px 30px -10px ${config.primary_color}15`
               }}
             >
               <h3 className="text-lg font-bold mb-4" style={{ color: config.text_primary }}>Connect</h3>
               <div className="flex gap-3">
-                <a 
+                <a
                   href={artistData.socialLinks.instagram}
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
                   style={{ backgroundColor: '#E4405F' }}
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.204-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"/>
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.204-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z" />
                   </svg>
                 </a>
-                <a 
+                <a
                   href={artistData.socialLinks.facebook}
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
                   style={{ backgroundColor: '#1877F2' }}
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
                 </a>
-                <a 
+                <a
                   href={artistData.socialLinks.twitter}
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
                   style={{ backgroundColor: '#1DA1F2' }}
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.006-.63A9.935 9.935 0 0024 4.59z"/>
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.006-.63A9.935 9.935 0 0024 4.59z" />
                   </svg>
                 </a>
-                <a 
+                <a
                   href={artistData.socialLinks.website}
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:shadow-lg hover:scale-110"
                   style={{ backgroundColor: config.text_muted }}

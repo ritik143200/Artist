@@ -10,7 +10,11 @@ const AdminDashboard = ({ config }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  
+
+  // Notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   // Data states
   const [users, setUsers] = useState([]);
   const [artists, setArtists] = useState([]);
@@ -41,19 +45,20 @@ const AdminDashboard = ({ config }) => {
   // Fetch data from backend APIs
   useEffect(() => {
     if (!adminData) return;
-    
+
     const fetchDashboardData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Fetch all data in parallel
         const [
-          usersRes, 
-          artistsRes, 
-          bookingsRes, 
+          usersRes,
+          artistsRes,
+          bookingsRes,
           inquiriesRes,
-          analyticsRes
+          analyticsRes,
+          notificationsRes
         ] = await Promise.all([
           fetch('http://localhost:5001/api/admin/users', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
@@ -69,6 +74,9 @@ const AdminDashboard = ({ config }) => {
           }),
           fetch('http://localhost:5001/api/admin/analytics', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+          }),
+          fetch('http://localhost:5001/api/admin/notifications', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
           })
         ]);
 
@@ -78,6 +86,7 @@ const AdminDashboard = ({ config }) => {
         const bookingsData = bookingsRes.ok ? await bookingsRes.json() : [];
         const inquiriesData = inquiriesRes.ok ? await inquiriesRes.json() : [];
         const analyticsData = analyticsRes.ok ? await analyticsRes.json() : {};
+        const notificationsData = notificationsRes.ok ? await notificationsRes.json() : [];
 
         // Update state
         setUsers(usersData);
@@ -85,6 +94,7 @@ const AdminDashboard = ({ config }) => {
         setBookings(bookingsData);
         setInquiries(inquiriesData);
         setAnalytics(analyticsData);
+        setNotifications(notificationsData);
 
         console.log('📊 Dashboard data loaded:', {
           users: usersData.length,
@@ -97,7 +107,7 @@ const AdminDashboard = ({ config }) => {
       } catch (error) {
         console.error('❌ Error fetching dashboard data:', error);
         setError('Failed to load dashboard data');
-        
+
         // Fallback to mock data for development
         setUsers([
           { _id: 1, name: 'Rahul Sharma', email: 'rahul@example.com', role: 'user', joinDate: '2024-01-15', status: 'active', lastLogin: '2024-03-15' },
@@ -148,12 +158,21 @@ const AdminDashboard = ({ config }) => {
 
     const interval = setInterval(async () => {
       try {
-        const analyticsRes = await fetch('http://localhost:5001/api/admin/analytics', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
-        });
+        const [analyticsRes, notificationsRes] = await Promise.all([
+          fetch('http://localhost:5001/api/admin/analytics', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+          }),
+          fetch('http://localhost:5001/api/admin/notifications', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+          })
+        ]);
         if (analyticsRes.ok) {
           const analyticsData = await analyticsRes.json();
           setAnalytics(analyticsData);
+        }
+        if (notificationsRes.ok) {
+          const notificationsData = await notificationsRes.json();
+          setNotifications(notificationsData);
         }
       } catch (error) {
         console.log('🔄 Real-time update failed:', error);
@@ -168,14 +187,24 @@ const AdminDashboard = ({ config }) => {
     try {
       setSuccessMessage(null);
       setError(null);
-      
-      const response = await fetch(`http://localhost:5001/api/admin/users/${userId}/${action}`, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+
+      let response;
+      if (action === 'delete') {
+        response = await fetch(`http://localhost:5001/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          }
+        });
+      } else {
+        response = await fetch(`http://localhost:5001/api/admin/users/${userId}/${action}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
 
       if (response.ok) {
         // Refresh users data
@@ -185,15 +214,13 @@ const AdminDashboard = ({ config }) => {
         if (usersRes.ok) {
           const updatedUsers = await usersRes.json();
           setUsers(updatedUsers);
-          
+
           // Show success message
-          const user = updatedUsers.find(u => u._id === userId);
-          if (action === 'toggle-status') {
-            setSuccessMessage(`User "${user?.name || 'Unknown'}" ${user?.status === 'active' ? 'deactivated' : 'activated'} successfully`);
-          } else if (action === 'delete') {
-            setSuccessMessage(`User deleted successfully`);
-          }
-          
+          if (action === 'block') setSuccessMessage(`User successfully blocked.`);
+          else if (action === 'unblock') setSuccessMessage(`User successfully unblocked.`);
+          else if (action === 'suspend') setSuccessMessage(`User successfully suspended.`);
+          else if (action === 'delete') setSuccessMessage(`User deleted successfully`);
+
           // Clear success message after 3 seconds
           setTimeout(() => setSuccessMessage(null), 3000);
         }
@@ -213,7 +240,7 @@ const AdminDashboard = ({ config }) => {
     try {
       const response = await fetch(`http://localhost:5001/api/admin/artists/${artistId}/${action}`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
           'Content-Type': 'application/json'
         }
@@ -237,7 +264,7 @@ const AdminDashboard = ({ config }) => {
     try {
       const response = await fetch(`http://localhost:5001/api/admin/bookings/${bookingId}/${action}`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
           'Content-Type': 'application/json'
         }
@@ -254,6 +281,35 @@ const AdminDashboard = ({ config }) => {
       }
     } catch (error) {
       console.error(`❌ Error ${action} booking:`, error);
+    }
+  };
+
+  const handleMarkNotificationRead = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:5001/api/admin/notifications/${id}/read`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const res = await fetch(`http://localhost:5001/api/admin/notifications/read-all`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setShowNotifications(false);
+      }
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
     }
   };
 
@@ -286,8 +342,8 @@ const AdminDashboard = ({ config }) => {
             </svg>
           </div>
           <p className="text-red-600 font-medium">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Retry
@@ -377,7 +433,7 @@ const AdminDashboard = ({ config }) => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button 
+          <button
             onClick={() => {
               // Refresh users data
               const fetchUsers = async () => {
@@ -402,10 +458,10 @@ const AdminDashboard = ({ config }) => {
             <span className="hidden sm:inline">Refresh</span>
             <span className="sm:hidden">↻</span>
           </button>
-          <button 
-            onClick={() => navigate('auth')} 
+          <button
+            onClick={() => navigate('auth')}
             className="px-3 sm:px-4 py-2 rounded-xl font-medium transition-all hover:shadow-md transform hover:scale-105 flex items-center gap-2 text-sm sm:text-base"
-            style={{ 
+            style={{
               backgroundColor: config?.primary_color || '#3b82f6',
               color: 'white'
             }}
@@ -497,8 +553,8 @@ const AdminDashboard = ({ config }) => {
                   <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mr-2 sm:mr-3" 
-                             style={{ backgroundColor: `${config?.primary_color || '#3b82f6'}20` }}>
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mr-2 sm:mr-3"
+                          style={{ backgroundColor: `${config?.primary_color || '#3b82f6'}20` }}>
                           <span className="text-sm sm:text-lg font-medium" style={{ color: config?.primary_color || '#3b82f6' }}>
                             {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                           </span>
@@ -519,13 +575,12 @@ const AdminDashboard = ({ config }) => {
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <span className={`px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : user.role === 'artist'
+                      <span className={`px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin'
+                        ? 'bg-purple-100 text-purple-800'
+                        : user.role === 'artist'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-gray-100 text-gray-800'
-                      }`}>
+                        }`}>
                         {user.role || 'user'}
                       </span>
                     </td>
@@ -550,34 +605,59 @@ const AdminDashboard = ({ config }) => {
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <span className={`px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                        }`}>
                         {user.status || 'inactive'}
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <button 
-                          onClick={() => handleUserAction(user._id, 'toggle-status')}
-                          className="px-2 sm:px-3 py-1 rounded-lg text-xs font-medium transition-colors hover:shadow-sm"
-                          style={{ 
-                            backgroundColor: user.status === 'active' ? '#fef2f2' : '#f0fdf4',
-                            color: user.status === 'active' ? '#dc2626' : '#16a34a'
-                          }}
+                      <div className="flex items-center gap-1 sm:gap-2 text-xs">
+                        <button
+                          onClick={() => alert(`Viewing profile for ${user.name}`)}
+                          className="px-2 sm:px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors"
                         >
-                          <span className="hidden sm:inline">{user.status === 'active' ? 'Deactivate' : 'Activate'}</span>
-                          <span className="sm:hidden">{user.status === 'active' ? '⊘' : '✓'}</span>
+                          <span className="hidden sm:inline">View</span>
+                          <span className="sm:hidden">👁</span>
                         </button>
-                        <button 
+                        <button
+                          onClick={() => alert(`Editing triggered for ${user.name}`)}
+                          className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                        >
+                          <span className="hidden sm:inline">Edit</span>
+                          <span className="sm:hidden">✎</span>
+                        </button>
+
+                        {user.status === 'active' ? (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to block user "${user.name || 'Unknown'}"?`)) {
+                                handleUserAction(user._id, 'block');
+                              }
+                            }}
+                            className="px-2 sm:px-3 py-1 bg-yellow-50 text-yellow-600 rounded-lg font-medium hover:bg-yellow-100 transition-colors"
+                          >
+                            <span className="hidden sm:inline">Block</span>
+                            <span className="sm:hidden">⊘</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleUserAction(user._id, 'unblock')}
+                            className="px-2 sm:px-3 py-1 bg-green-50 text-green-600 rounded-lg font-medium hover:bg-green-100 transition-colors"
+                          >
+                            <span className="hidden sm:inline">Unblock</span>
+                            <span className="sm:hidden">✓</span>
+                          </button>
+                        )}
+
+                        <button
                           onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete user "${user.name || 'Unknown'}"? This action cannot be undone.`)) {
+                            if (window.confirm(`Are you sure you want to permanently delete user "${user.name || 'Unknown'}"? This action cannot be undone.`)) {
                               handleUserAction(user._id, 'delete');
                             }
                           }}
-                          className="px-2 sm:px-3 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
+                          className="px-2 sm:px-3 py-1 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
                         >
                           <span className="hidden sm:inline">Delete</span>
                           <span className="sm:hidden">🗑</span>
@@ -633,12 +713,71 @@ const AdminDashboard = ({ config }) => {
                 </div>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </button>
-                <button 
+                <div className="relative">
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative"
+                  >
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {notifications.filter(n => !n.isRead).length > 0 && (
+                      <span className="absolute top-1 right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 text-[9px] text-white justify-center items-center font-bold">
+                          {notifications.filter(n => !n.isRead).length}
+                        </span>
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notifications Dropdown */}
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                      <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <h3 className="font-semibold text-gray-800">Notifications</h3>
+                        {notifications.filter(n => !n.isRead).length > 0 && (
+                          <button
+                            onClick={handleMarkAllNotificationsRead}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-6 text-center text-sm text-gray-500">
+                            No notifications yet
+                          </div>
+                        ) : (
+                          notifications.map(notification => (
+                            <div
+                              key={notification._id}
+                              onClick={() => !notification.isRead && handleMarkNotificationRead(notification._id)}
+                              className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col gap-1 ${!notification.isRead ? 'bg-blue-50/50' : ''}`}
+                            >
+                              <div className="flex items-start">
+                                <div className={`w-2 h-2 mt-1.5 rounded-full mr-3 flex-shrink-0 ${!notification.isRead ? 'bg-blue-500' : 'bg-transparent'}`}></div>
+                                <div>
+                                  <p className={`text-sm tracking-tight ${!notification.isRead ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {new Date(notification.createdAt).toLocaleString('en-US', {
+                                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button
                   onClick={handleLogout}
                   className="px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-sm sm:text-base"
                 >
@@ -659,11 +798,10 @@ const AdminDashboard = ({ config }) => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === tab
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 <span className="hidden sm:inline">{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
                 <span className="sm:hidden">
@@ -696,13 +834,138 @@ const AdminDashboard = ({ config }) => {
           </div>
         )}
         {activeTab === 'bookings' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-            <h3 className="text-xl font-bold mb-4" style={{ color: config?.text_primary || '#1f2937' }}>
-              Booking Management
-            </h3>
-            <p className="text-sm" style={{ color: config?.text_secondary || '#6b7280' }}>
-              Booking management features coming soon...
-            </p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <h3 className="text-xl font-bold" style={{ color: config?.text_primary || '#1f2937' }}>
+                  Booking Management
+                </h3>
+                <p className="text-sm mt-1" style={{ color: config?.text_secondary || '#6b7280' }}>
+                  Manage and track all platform booking requests
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const bookingsRes = await fetch('http://localhost:5001/api/admin/bookings', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+                      });
+                      if (bookingsRes.ok) {
+                        setBookings(await bookingsRes.json());
+                      }
+                    } catch (error) {
+                      console.error('❌ Error refreshing bookings:', error);
+                    }
+                  }}
+                  className="px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium flex items-center gap-2 text-sm sm:text-base"
+                >
+                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="sm:hidden">↻</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Error/Success Notifications */}
+            {error && (
+              <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-red-800 font-medium">{error}</p>
+              </div>
+            )}
+            {successMessage && (
+              <div className="mx-6 mt-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <p className="text-green-800 font-medium">{successMessage}</p>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] sm:min-w-0">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artist</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Event Details</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {bookings.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-4 sm:px-6 py-8 sm:py-12 text-center text-gray-500">
+                        No bookings exist on the platform yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    bookings.map((booking, index) => (
+                      <tr key={booking._id || booking.id || `b-${index}`} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{booking.userId?.name || booking.name || 'Unknown User'}</div>
+                          <div className="text-xs text-gray-500">{booking.userId?.email || booking.email || 'N/A'}</div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{booking.userId?.phone || booking.phone || 'N/A'}</div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {booking.artistId?.profileImage && (
+                              <img src={booking.artistId.profileImage} alt="Artist" className="w-8 h-8 rounded-full border border-gray-200 mr-2" />
+                            )}
+                            <div className="text-sm font-medium text-gray-900">
+                              {booking.artistId ? `${booking.artistId.firstName} ${booking.artistId.lastName}` : (booking.artist || 'Unknown Artist')}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
+                          <div className="text-sm text-gray-900">{booking.eventType || booking.event}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(booking.eventDate || booking.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            ₹{(booking.budget || booking.amount || 0).toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <span className={`px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${['confirmed', 'completed'].includes(booking.status)
+                            ? 'bg-green-100 text-green-800'
+                            : booking.status === 'adminApproved'
+                              ? 'bg-blue-100 text-blue-800'
+                              : ['rejected', 'artistRejected'].includes(booking.status)
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                            {booking.status === 'adminApproved' ? 'Admin Approved' : booking.status === 'artistRejected' ? 'Artist Declined' : booking.status === 'confirmed' ? 'Confirmed' : booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Unknown'}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
+                          <select
+                            className="border border-gray-300 rounded px-2 py-1 text-sm bg-white"
+                            value={booking.status}
+                            onChange={(e) => {
+                              const newAction = e.target.value === 'adminApproved' ? 'approve' : e.target.value === 'confirmed' ? 'accept' : e.target.value === 'rejected' ? 'reject' : e.target.value === 'completed' ? 'complete' : null;
+                              if (newAction && window.confirm(`Change booking to ${e.target.value}?`)) {
+                                handleBookingAction(booking._id || booking.id, newAction);
+                              }
+                            }}
+                          >
+                            <option value="pending" disabled>Pending</option>
+                            <option value="adminApproved">Approve (Forward to Artist)</option>
+                            <option value="confirmed">Confirmed (By Artist)</option>
+                            <option value="artistRejected" disabled>Artist Declined</option>
+                            <option value="rejected">Rejected (By Admin)</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
         {activeTab === 'inquiries' && (
@@ -741,7 +1004,7 @@ const AdminDashboard = ({ config }) => {
                   </p>
                 </div>
                 <button className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                        style={{ backgroundColor: config?.primary_color || '#3b82f6' }}>
+                  style={{ backgroundColor: config?.primary_color || '#3b82f6' }}>
                   <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
                 </button>
               </div>

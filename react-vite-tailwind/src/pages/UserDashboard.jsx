@@ -15,25 +15,27 @@ const UserDashboard = ({ config }) => {
       setUserData(JSON.parse(storedUser));
     }
 
-    // Load mock data
-    setBookings([
-      {
-        id: 1,
-        artistName: 'Melody Band',
-        eventDate: '2024-03-15',
-        status: 'confirmed',
-        amount: 25000,
-        event: 'Wedding Reception'
-      },
-      {
-        id: 2,
-        artistName: 'DJ Storm',
-        eventDate: '2024-04-20',
-        status: 'pending',
-        amount: 15000,
-        event: 'Birthday Party'
+    const fetchBookings = async () => {
+      try {
+        const token = localStorage.getItem('userToken');
+        if (!token) return;
+
+        const res = await fetch('http://localhost:5001/api/bookings/my', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setBookings(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
       }
-    ]);
+    };
+
+    fetchBookings();
 
     setFavoriteArtists([
       { id: 1, name: 'Melody Band', category: 'Bands', rating: 4.8, image: '🎸' },
@@ -43,6 +45,7 @@ const UserDashboard = ({ config }) => {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem("loggedInUser");
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
     navigate('home');
@@ -57,7 +60,7 @@ const UserDashboard = ({ config }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-gray-800">12</span>
+          <span className="text-2xl font-bold text-gray-800">{bookings.length}</span>
         </div>
         <h3 className="text-gray-600 text-sm font-medium">Total Bookings</h3>
       </div>
@@ -69,7 +72,7 @@ const UserDashboard = ({ config }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-gray-800">8</span>
+          <span className="text-2xl font-bold text-gray-800">{bookings.filter(b => b.status === 'completed').length}</span>
         </div>
         <h3 className="text-gray-600 text-sm font-medium">Completed Events</h3>
       </div>
@@ -81,7 +84,7 @@ const UserDashboard = ({ config }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-gray-800">2</span>
+          <span className="text-2xl font-bold text-gray-800">{bookings.filter(b => b.status === 'pending' || b.status === 'accepted').length}</span>
         </div>
         <h3 className="text-gray-600 text-sm font-medium">Upcoming Events</h3>
       </div>
@@ -93,7 +96,7 @@ const UserDashboard = ({ config }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-gray-800">15</span>
+          <span className="text-2xl font-bold text-gray-800">{favoriteArtists.length}</span>
         </div>
         <h3 className="text-gray-600 text-sm font-medium">Favorite Artists</h3>
       </div>
@@ -117,30 +120,49 @@ const UserDashboard = ({ config }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {bookings.map((booking) => (
-              <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+            {bookings.length > 0 ? bookings.map((booking, index) => (
+              <tr key={booking._id || booking.id || `booking-${index}`} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{booking.artistName}</div>
+                  <div className="flex items-center">
+                    {booking.artistId?.profileImage && (
+                      <img
+                        src={booking.artistId.profileImage}
+                        alt="Artist"
+                        className="w-8 h-8 rounded-full border border-gray-200 mr-3"
+                      />
+                    )}
+                    <div className="text-sm font-medium text-gray-900">
+                      {booking.artistId ? `${booking.artistId.firstName} ${booking.artistId.lastName}` : 'Unknown Artist'}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-600">{booking.event}</div>
+                  <div className="text-sm text-gray-600">{booking.eventType}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-600">{booking.eventDate}</div>
+                  <div className="text-sm text-gray-600">{new Date(booking.eventDate).toLocaleDateString()}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">₹{booking.amount.toLocaleString()}</div>
+                  <div className="text-sm font-medium text-gray-900">₹{booking.budget?.toLocaleString()}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === 'confirmed'
-                      ? 'bg-green-100 text-green-800'
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === 'accepted' || booking.status === 'completed'
+                    ? 'bg-green-100 text-green-800'
+                    : booking.status === 'rejected'
+                      ? 'bg-red-100 text-red-800'
                       : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                    {booking.status}
+                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                  No bookings found. Discover artists to make your first booking!
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -208,11 +230,10 @@ const UserDashboard = ({ config }) => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab
-                    ? 'border-brand-500 text-brand-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
+                  ? 'border-brand-500 text-brand-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>

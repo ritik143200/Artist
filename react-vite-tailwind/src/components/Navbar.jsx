@@ -184,6 +184,7 @@ const Navbar = ({ config }) => {
                     <div className="border-t border-gray-200 mt-2 pt-2">
                       <button
                         onClick={() => {
+                          localStorage.removeItem("loggedInUser");
                           localStorage.removeItem('userToken');
                           localStorage.removeItem('userData');
                           setUserData(null);

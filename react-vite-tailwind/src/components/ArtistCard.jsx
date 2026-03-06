@@ -1,11 +1,13 @@
 import { useRouter } from '../contexts/RouterContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import ArtistInquiry from './ArtistInquiry';
 
 const ArtistCard = ({ artist, config, fullWidth = false }) => {
   const { navigate } = useRouter();
+  const { isAuthenticated } = useAuth();
   const [showInquiry, setShowInquiry] = useState(false);
-  
+
   console.log('🔄 ArtistCard rendered, showInquiry:', showInquiry);
 
   // Handle both backend and mock data structures
@@ -14,27 +16,27 @@ const ArtistCard = ({ artist, config, fullWidth = false }) => {
     artist.name ||
     'Artist Name';
   const artistSpecialty = artist.subcategory || artist.specialty || artist.skills?.[0] || 'Professional Artist';
-const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.average : 
-                      typeof artist.rating === 'number' ? artist.rating : 
-                      0;
-  const artistReviews = typeof artist.rating?.count === 'number' ? artist.rating.count : 
-                      typeof artist.reviews === 'number' ? artist.reviews : 
-                      0;
+  const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.average :
+    typeof artist.rating === 'number' ? artist.rating :
+      0;
+  const artistReviews = typeof artist.rating?.count === 'number' ? artist.rating.count :
+    typeof artist.reviews === 'number' ? artist.reviews :
+      0;
   // Enhanced budget handling with string conversion
   const budgetMin = artist.budgetMin ? (typeof artist.budgetMin === 'string' ? parseInt(artist.budgetMin) : artist.budgetMin) : null;
   const budgetMax = artist.budgetMax ? (typeof artist.budgetMax === 'string' ? parseInt(artist.budgetMax) : artist.budgetMax) : null;
   const budget = artist.budget ? (typeof artist.budget === 'string' ? parseInt(artist.budget) : artist.budget) : null;
 
-  const artistPrice = budgetMin && budgetMax 
+  const artistPrice = budgetMin && budgetMax
     ? `₹${budgetMin.toLocaleString()} - ₹${budgetMax.toLocaleString()}`
     : budgetMin && !budgetMax
       ? `Starting from ₹${budgetMin.toLocaleString()}`
       : budgetMax && !budgetMin
         ? `Upto ₹${budgetMax.toLocaleString()}`
-        : budget 
-          ? `₹${budget.toLocaleString()}` 
+        : budget
+          ? `₹${budget.toLocaleString()}`
           : artist.price || 'Price on request';
-  
+
   console.log('💰 Enhanced budget data:', {
     artist: artist.name || artist.fullName,
     originalBudgetMin: artist.budgetMin,
@@ -44,10 +46,10 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
     convertedBudgetMax: budgetMax,
     convertedBudget: budget,
     artistPrice: artistPrice,
-    budgetType: budgetMin && budgetMax ? 'Range' : 
-                budgetMin && !budgetMax ? 'Min Only' : 
-                budgetMax && !budgetMin ? 'Max Only' : 
-                budget ? 'Single' : 'None',
+    budgetType: budgetMin && budgetMax ? 'Range' :
+      budgetMin && !budgetMax ? 'Min Only' :
+        budgetMax && !budgetMin ? 'Max Only' :
+          budget ? 'Single' : 'None',
     budgetMinType: typeof artist.budgetMin,
     budgetMaxType: typeof artist.budgetMax,
     budgetTypeType: typeof artist.budget,
@@ -56,7 +58,7 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
   // Improved image handling
   const artistImage = artist.profileImage || artist.image || 'https://picsum.photos/seed/artist-default/400/400.jpg';
   const isImageURL = typeof artistImage === 'string' && (
-    artistImage.startsWith('http') || 
+    artistImage.startsWith('http') ||
     artistImage.startsWith('/api/') ||
     artistImage.startsWith('data:') ||
     artistImage.startsWith('blob:')
@@ -154,9 +156,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
           <div className="flex-1 min-w-0">
             {/* Category Breadcrumb */}
             <div className="flex items-center gap-2 mb-3">
-              <span 
+              <span
                 className="px-3 py-1 text-xs font-semibold rounded-full"
-                style={{ 
+                style={{
                   background: `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`,
                   color: 'white'
                 }}
@@ -166,9 +168,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
               <svg className="w-3 h-3" style={{ color: themeConfig.text_muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-              <span 
+              <span
                 className="px-3 py-1 text-xs font-semibold rounded-full"
-                style={{ 
+                style={{
                   backgroundColor: `${themeConfig.secondary_color}10`,
                   color: themeConfig.secondary_color
                 }}
@@ -180,9 +182,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                   <svg className="w-3 h-3" style={{ color: themeConfig.text_muted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <span 
+                  <span
                     className="px-3 py-1 text-xs font-semibold rounded-full"
-                    style={{ 
+                    style={{
                       backgroundColor: `${themeConfig.primary_color}10`,
                       color: themeConfig.primary_color
                     }}
@@ -199,9 +201,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                   <h3 className="text-2xl font-bold truncate" style={{ color: config.text_primary }}>{artistName}</h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {isVerified && (
-                      <span 
+                      <span
                         className="px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1"
-                        style={{ 
+                        style={{
                           backgroundColor: `${config.success_color}10`,
                           color: config.success_color
                         }}
@@ -213,9 +215,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                       </span>
                     )}
                     {artist.trending && (
-                      <span 
+                      <span
                         className="px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1"
-                        style={{ 
+                        style={{
                           backgroundColor: `${config.warning_color}10`,
                           color: config.warning_color
                         }}
@@ -233,9 +235,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                   <div className="mb-4">
                     <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: config.text_muted }}>Specializations</p>
                     <div className="flex flex-wrap gap-2">
-                      <span 
+                      <span
                         className="px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1"
-                        style={{ 
+                        style={{
                           background: `linear-gradient(135deg, ${config.primary_color}05, ${config.secondary_color}05)`,
                           color: config.primary_color,
                           border: `1px solid ${config.primary_color}20`
@@ -244,9 +246,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: config.primary_color }}></span>
                         {artistSubcategory}
                       </span>
-                      <span 
+                      <span
                         className="px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1"
-                        style={{ 
+                        style={{
                           background: `linear-gradient(135deg, ${config.primary_color}05, ${config.secondary_color}05)`,
                           color: config.primary_color,
                           border: `1px solid ${config.primary_color}20`
@@ -289,9 +291,9 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
               <div className="text-right flex-shrink-0 ml-6">
                 <div className="mb-2">
                   <p className="text-xs uppercase tracking-wide font-medium mb-1" style={{ color: themeConfig.text_muted }}>Starting From</p>
-                  <div 
+                  <div
                     className="text-3xl font-bold"
-                    style={{ 
+                    style={{
                       background: `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`,
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
@@ -315,7 +317,7 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                       }
                     }}
                     className="px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                    style={{ 
+                    style={{
                       background: `linear-gradient(135deg, ${themeConfig.primary_action}, ${themeConfig.primary_color})`,
                       color: 'white',
                       border: 'none',
@@ -341,12 +343,16 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log('🎯 Contact button clicked!');
+                      if (!isAuthenticated) {
+                        navigate('auth');
+                        return;
+                      }
                       console.log('🔄 Before setShowInquiry:', showInquiry);
                       setShowInquiry(true);
                       console.log('🔄 After setShowInquiry call');
                     }}
                     className="px-6 py-2 rounded-xl font-bold transition-all duration-300 relative z-10"
-                    style={{ 
+                    style={{
                       border: `2px solid ${themeConfig.primary_action}`,
                       color: themeConfig.primary_action,
                       backgroundColor: 'transparent',
@@ -454,56 +460,56 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
           <span className="text-lg font-bold text-brand-600">{artistPrice}</span>
         </div>
 
-        <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('🔘 Profile button clicked for artist:', artist.name || artist.fullName);
-                console.log('🆔 Artist ID:', artist._id || artist.id);
-                console.log('📋 Full artist object:', artist);
-                console.log('🎨 Grid button themeConfig:', themeConfig);
-                navigate('artist', { artist });
-              }}
-              className="w-full py-2 rounded-lg font-bold text-sm transition-all hover:shadow-md transform hover:scale-105"
-              style={{ 
-                backgroundColor: themeConfig.primary_action,
-                color: 'white',
-                fontWeight: '700',
-                letterSpacing: '0.5px',
-                textTransform: 'uppercase',
-                border: 'none'
-              }}
-              onMouseEnter={(e) => {
-                console.log('🎨 Grid button hover - themeConfig.primary_action:', themeConfig.primary_action);
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.boxShadow = `0 8px 25px -5px ${themeConfig.primary_action}40`;
-                e.currentTarget.style.backgroundColor = themeConfig.primary_color;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.backgroundColor = themeConfig.primary_action;
-              }}
-            >
-              Profile
-            </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('🔘 Profile button clicked for artist:', artist.name || artist.fullName);
+            console.log('🆔 Artist ID:', artist._id || artist.id);
+            console.log('📋 Full artist object:', artist);
+            console.log('🎨 Grid button themeConfig:', themeConfig);
+            navigate('artist', { artist });
+          }}
+          className="w-full py-2 rounded-lg font-bold text-sm transition-all hover:shadow-md transform hover:scale-105"
+          style={{
+            backgroundColor: themeConfig.primary_action,
+            color: 'white',
+            fontWeight: '700',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            border: 'none'
+          }}
+          onMouseEnter={(e) => {
+            console.log('🎨 Grid button hover - themeConfig.primary_action:', themeConfig.primary_action);
+            e.currentTarget.style.transform = 'scale(1.02)';
+            e.currentTarget.style.boxShadow = `0 8px 25px -5px ${themeConfig.primary_action}40`;
+            e.currentTarget.style.backgroundColor = themeConfig.primary_color;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.backgroundColor = themeConfig.primary_action;
+          }}
+        >
+          Profile
+        </button>
       </div>
     </div>
   );
-  
+
   // Return modal if open, otherwise the card
   if (showInquiry) {
     return <ArtistInquiry artist={artist} config={config} onClose={() => setShowInquiry(false)} />;
   }
-  
+
   return (
-    <div 
+    <div
       onClick={() => {
         console.log('🖱️ Container clicked for artist:', artist.name || artist.fullName);
         console.log('🆔 Artist ID:', artist._id || artist.id);
         navigate('artist', { artist });
       }}
       className="rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-      style={{ 
+      style={{
         backgroundColor: config.card_background,
         border: `1px solid ${config.primary_color}10`,
         boxShadow: `0 10px 30px -10px ${config.primary_color}15`
@@ -523,13 +529,13 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
         <div className="relative mb-4">
           <div className="relative" style={{ width: '100%', aspectRatio: '1/1.54' }}>
             <div className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner"
-              style={{ 
+              style={{
                 background: `linear-gradient(135deg, ${config.primary_color}05, ${config.secondary_color}10)`
               }}
             >
               {isImageURL ? (
-                <img 
-                  src={artistImage} 
+                <img
+                  src={artistImage}
                   alt={artistName}
                   className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
@@ -556,7 +562,7 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
               <span className="font-bold text-sm" style={{ color: themeConfig.text_primary }}>{artistRating.toFixed(1)}</span>
               <span className="text-xs" style={{ color: themeConfig.text_muted }}>({artistReviews})</span>
             </div>
-            <span className="text-lg font-bold" style={{ 
+            <span className="text-lg font-bold" style={{
               background: `linear-gradient(135deg, ${themeConfig.primary_color}, ${themeConfig.secondary_color})`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -566,15 +572,15 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
               fontWeight: '700'
             }}>{artistPrice}</span>
           </div>
-          
+
           <div className="flex flex-col gap-2">
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 navigate('artist', { artist });
               }}
               className="w-full py-2 rounded-lg font-medium text-sm transition-all hover:shadow-md transform hover:scale-105"
-              style={{ 
+              style={{
                 backgroundColor: config.primary_action,
                 color: 'white'
               }}
@@ -589,16 +595,20 @@ const artistRating = typeof artist.rating?.average === 'number' ? artist.rating.
             >
               View Profile
             </button>
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 console.log('🎯 Contact button clicked (grid layout)!');
+                if (!isAuthenticated) {
+                  navigate('auth');
+                  return;
+                }
                 console.log('🔄 Before setShowInquiry (grid):', showInquiry);
                 setShowInquiry(true);
                 console.log('🔄 After setShowInquiry call (grid)');
               }}
               className="w-full py-2 rounded-lg font-bold text-sm transition-all hover:shadow-md transform hover:scale-105 relative z-10"
-              style={{ 
+              style={{
                 border: `2px solid ${themeConfig.primary_action}`,
                 color: themeConfig.primary_action,
                 backgroundColor: 'transparent',

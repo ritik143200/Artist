@@ -8,6 +8,8 @@ const fs = require('fs');
 const authRoutes = require('./routes/authRoutes');
 const artistRoutes = require('./routes/artistRoutes');
 const artistsRoute = require('./routes/artists');
+const bookingRoutes = require('./routes/bookingRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +42,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/artist', artistRoutes);
 app.use('/api/artists', artistsRoute);
 app.use('/api/auth', authRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

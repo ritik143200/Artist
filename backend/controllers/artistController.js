@@ -2,6 +2,7 @@ const Artist = require('../models/Artist');
 const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -162,6 +163,13 @@ const getAllArtists = async (req, res) => {
 // Get artist by ID
 const getArtistById = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid artist ID'
+      });
+    }
+
     const artist = await Artist.findById(req.params.id);
     
     if (!artist) {

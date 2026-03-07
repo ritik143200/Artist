@@ -1,6 +1,49 @@
 const express = require('express');
 const router = express.Router();
 const Artist = require('../models/Artist');
+const mongoose = require('mongoose');
+
+// Get category-wise artist counts
+router.get('/category-counts', async (req, res) => {
+  try {
+    const counts = await Artist.aggregate([
+      {
+        $match: {
+          isActive: true,
+          category: { $exists: true, $ne: null, $ne: '' }
+        }
+      },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          category: '$_id',
+          count: 1
+        }
+      },
+      {
+        $sort: { count: -1 }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      counts
+    });
+  } catch (error) {
+    console.error('Error fetching category counts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch category counts',
+      error: error.message
+    });
+  }
+});
 
 // Get all artists with optional filters
 router.get('/', async (req, res) => {
@@ -64,6 +107,13 @@ router.get('/', async (req, res) => {
 // Get artist by ID
 router.get('/:id', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid artist ID'
+      });
+    }
+
     const artist = await Artist.findById(req.params.id);
     
     if (!artist) {

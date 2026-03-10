@@ -52,6 +52,177 @@ const UserDashboard = ({ config }) => {
     navigate('home');
   };
 
+  const renderUser = () => (
+    <div className="space-y-6">
+      {/* User Profile Section */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <h3 className="text-2xl font-bold text-gray-800 mb-6">User Profile</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Profile Picture */}
+          <div className="text-center">
+            <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+              {userData?.profileImage ? (
+                <img 
+                  src={userData.profileImage} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-4xl text-gray-400">
+                  {userData?.name?.charAt(0).toUpperCase() || 'U'}
+                </div>
+              )}
+            </div>
+            <button className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors">
+              Change Photo
+            </button>
+          </div>
+          
+          {/* User Information */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <input 
+                type="text" 
+                value={userData?.name || ''} 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input 
+                type="email" 
+                value={userData?.email || ''} 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input 
+                type="tel" 
+                value={userData?.phone || 'Not provided'} 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input 
+                type="text" 
+                value={userData?.location || 'Not provided'} 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                readOnly
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* User Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <span className="text-2xl font-bold text-gray-800">1</span>
+          </div>
+          <h3 className="text-gray-600 text-sm font-medium">Account Age</h3>
+          <p className="text-gray-500 text-xs mt-1">Member since 2024</p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <span className="text-2xl font-bold text-gray-800">{favoriteArtists.length}</span>
+          </div>
+          <h3 className="text-gray-600 text-sm font-medium">Favorite Artists</h3>
+          <p className="text-gray-500 text-xs mt-1">Artists you love</p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span className="text-2xl font-bold text-gray-800">{bookings.filter(b => b.status === 'completed').length}</span>
+          </div>
+          <h3 className="text-gray-600 text-sm font-medium">Completed Events</h3>
+          <p className="text-gray-500 text-xs mt-1">Successfully attended</p>
+        </div>
+      </div>
+
+      {/* Account Settings */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Account Settings</h3>
+        
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800">Change Password</h4>
+                <p className="text-sm text-gray-500">Update your account password</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+              Update
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800">Notifications</h4>
+                <p className="text-sm text-gray-500">Manage email and push notifications</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+              Configure
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800">Privacy Settings</h4>
+                <p className="text-sm text-gray-500">Control your data and privacy preferences</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+              Manage
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderOverview = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
@@ -227,7 +398,7 @@ const UserDashboard = ({ config }) => {
         {/* Navigation Tabs */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
           <div className="flex space-x-8 px-6">
-            {['overview', 'bookings', 'favorites'].map((tab) => (
+            {['overview', 'bookings', 'favorites', 'user'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -246,6 +417,7 @@ const UserDashboard = ({ config }) => {
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'bookings' && renderBookings()}
         {activeTab === 'favorites' && renderFavorites()}
+        {activeTab === 'user' && renderUser()}
       </div>
     </div>
   );

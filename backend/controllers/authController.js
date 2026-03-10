@@ -230,9 +230,69 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// @desc    Change Password - Verify old password and update to new password
+// @route   POST /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    // req.user logic depends on if we have protect middleware, but authRoute is public. 
+    // Wait, let's look at `protect` middleware: we will use `protect` for this route.
+    const userId = req.user._id;
+    let userRecord = await User.findById(userId);
+    let userType = 'user';
+
+    if (!userRecord) {
+      userRecord = await Artist.findById(userId);
+      userType = 'artist';
+    }
+
+    if (!userRecord) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check for password
+    let isMatch;
+    if (userType === 'user') {
+      isMatch = await userRecord.comparePassword(currentPassword);
+    } else {
+      isMatch = await bcrypt.compare(currentPassword, userRecord.password);
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect current password' });
+    }
+
+    // Update password
+    if (userType === 'artist') {
+      const salt = await bcrypt.genSalt(10);
+      userRecord.password = await bcrypt.hash(newPassword, salt);
+    } else {
+      userRecord.password = newPassword; // User schema has pre-save hook
+    }
+
+    await userRecord.save();
+
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'An error occurred during password change. Please try again later.' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  changePassword
 };

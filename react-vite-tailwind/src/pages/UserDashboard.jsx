@@ -10,6 +10,17 @@ const UserDashboard = ({ config }) => {
   const [lastStatusUpdate, setLastStatusUpdate] = useState(null);
   const [bookingFilter, setBookingFilter] = useState('all');
 
+  // Change Password state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   useEffect(() => {
     // Load user data from localStorage
     const storedUser = localStorage.getItem('userData');
@@ -46,16 +57,16 @@ const UserDashboard = ({ config }) => {
           try {
             const endpoint = `${baseUrl}/api/bookings/my`;
             console.log(`� Trying URL: ${endpoint}`);
-            
+
             // Test health first
             const healthCheck = await fetch(`${baseUrl}/api/health`, {
               method: 'GET',
               headers: { 'Accept': 'application/json' }
             });
-            
+
             if (healthCheck.ok) {
               console.log(`✅ Health check passed for ${baseUrl}`);
-              
+
               // Now try bookings endpoint
               const res = await fetch(endpoint, {
                 method: 'GET',
@@ -67,7 +78,7 @@ const UserDashboard = ({ config }) => {
               });
 
               console.log(`📡 Response from ${baseUrl}:`, res.status);
-              
+
               if (res.ok) {
                 const data = await res.json();
                 if (data.success) {
@@ -95,7 +106,7 @@ const UserDashboard = ({ config }) => {
         } else {
           console.error('❌ All URLs failed - backend may be down or wrong configuration');
         }
-        
+
       } catch (error) {
         console.error("❌ Critical error in fetchBookings:", error);
       }
@@ -106,21 +117,21 @@ const UserDashboard = ({ config }) => {
     // Listen for booking status updates from Admin Panel
     const handleBookingStatusUpdate = (event) => {
       const { bookingId, newStatus, timestamp } = event.detail;
-      
+
       // Update local booking state with new status
-      setBookings(prev => prev.map(booking => 
-        (booking._id === bookingId || booking.id === bookingId) 
+      setBookings(prev => prev.map(booking =>
+        (booking._id === bookingId || booking.id === bookingId)
           ? { ...booking, status: newStatus }
           : booking
       ));
-      
+
       const statusStyle = getStatusStyle(newStatus);
       setLastStatusUpdate({
         bookingId,
         newStatus: statusStyle.label,
         timestamp: new Date(timestamp).toLocaleString()
       });
-      
+
       // Clear the status update message after 5 seconds
       setTimeout(() => setLastStatusUpdate(null), 5000);
     };
@@ -145,6 +156,55 @@ const UserDashboard = ({ config }) => {
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
     navigate('home');
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const token = localStorage.getItem('userToken');
+      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/$/, '');
+      const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPasswordSuccess('Password successfully updated!');
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+          setPasswordSuccess('');
+        }, 2000);
+      } else {
+        setPasswordError(data.message || 'Failed to update password');
+      }
+    } catch (error) {
+      setPasswordError('Network error. Please try again.');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   // Helper function to get status styling (consistent with Admin Panel)
@@ -177,7 +237,7 @@ const UserDashboard = ({ config }) => {
     if (bookingFilter === 'all') {
       return bookings;
     }
-    
+
     const statusMap = {
       'pending': 'pending',
       'approved': 'adminApproved',
@@ -186,7 +246,7 @@ const UserDashboard = ({ config }) => {
       'rejected': 'rejected',
       'artistRejected': 'artistRejected'
     };
-    
+
     const targetStatus = statusMap[bookingFilter];
     return bookings.filter(booking => booking.status === targetStatus);
   };
@@ -319,7 +379,10 @@ const UserDashboard = ({ config }) => {
                 <p className="text-sm text-gray-500">Update your account password</p>
               </div>
             </div>
-            <button className="px-4 py-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="px-4 py-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+            >
               Update
             </button>
           </div>
@@ -419,11 +482,11 @@ const UserDashboard = ({ config }) => {
       <div className="p-6 border-b border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h3 className="text-xl font-bold text-gray-800">My Bookings</h3>
-          
+
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-600">Filter:</label>
-            <select 
+            <select
               value={bookingFilter}
               onChange={(e) => setBookingFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white"
@@ -438,14 +501,14 @@ const UserDashboard = ({ config }) => {
             </select>
           </div>
         </div>
-        
+
         {/* Filter Summary */}
         {bookingFilter !== 'all' && (
           <div className="mt-3 flex items-center justify-between">
             <span className="text-sm text-gray-600">
               Showing <span className="font-semibold text-brand-600">{getFilteredBookings().length}</span> {bookingFilter} bookings
             </span>
-            <button 
+            <button
               onClick={() => setBookingFilter('all')}
               className="text-xs text-brand-600 hover:text-brand-700 font-medium"
             >
@@ -507,7 +570,7 @@ const UserDashboard = ({ config }) => {
                         <span className="text-xs font-bold text-brand-600">{progress.progressPercentage}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="h-2 rounded-full transition-all duration-500 bg-gradient-to-r from-brand-400 to-brand-600"
                           style={{ width: `${progress.progressPercentage}%` }}
                         />
@@ -515,13 +578,12 @@ const UserDashboard = ({ config }) => {
                       <div className="mt-2 space-y-1">
                         {progress.steps.map((step, stepIndex) => (
                           <div key={step.key} className="flex items-center text-xs">
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${
-                              step.completed 
-                                ? 'bg-brand-500 text-white' 
-                                : stepIndex === progress.currentStepIndex 
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center mr-2 ${step.completed
+                                ? 'bg-brand-500 text-white'
+                                : stepIndex === progress.currentStepIndex
                                   ? 'bg-brand-300 text-white animate-pulse'
                                   : 'bg-gray-300 text-gray-600'
-                            }`}>
+                              }`}>
                               {step.completed ? (
                                 <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-8-8a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 00-1.414 1.414l2-2a1 1 0 001.414 1.414z" clipRule="evenodd" />
@@ -532,13 +594,12 @@ const UserDashboard = ({ config }) => {
                                 <div className="w-2 h-2 bg-gray-400 rounded-full" />
                               )}
                             </div>
-                            <span className={`${
-                              step.completed 
-                                ? 'text-gray-900 font-medium' 
-                                : stepIndex === progress.currentStepIndex 
+                            <span className={`${step.completed
+                                ? 'text-gray-900 font-medium'
+                                : stepIndex === progress.currentStepIndex
                                   ? 'text-brand-600 font-medium'
                                   : 'text-gray-500'
-                            }`}>
+                              }`}>
                               {step.label}
                             </span>
                           </div>
@@ -551,7 +612,7 @@ const UserDashboard = ({ config }) => {
             }) : (
               <tr>
                 <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500">
-                  {bookingFilter === 'all' 
+                  {bookingFilter === 'all'
                     ? 'No bookings found. Discover artists to make your first booking!'
                     : `No ${bookingFilter} bookings found. Try selecting a different filter.`
                   }
@@ -614,7 +675,7 @@ const UserDashboard = ({ config }) => {
           </div>
         </div>
       )}
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page Header */}
         <div className="mb-8">
@@ -664,6 +725,101 @@ const UserDashboard = ({ config }) => {
         {activeTab === 'favorites' && renderFavorites()}
         {activeTab === 'user' && renderUser()}
       </div>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-800">Change Password</h3>
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                  setPasswordError('');
+                  setPasswordSuccess('');
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="p-6">
+              {passwordError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                    placeholder="Enter new password (min 6 chars)"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center"
+                >
+                  {isChangingPassword ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></div>
+                      Updating...
+                    </>
+                  ) : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

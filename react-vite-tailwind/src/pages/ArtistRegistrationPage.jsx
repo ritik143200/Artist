@@ -545,7 +545,8 @@ const ArtistRegistrationPage = ({ config }) => {
 
   const validateStep = (step) => {
     setError('');
-    
+ 
+    // Step 1: Personal Info + Category Selection (combined)
     if (step === 1) {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth || !formData.gender || !formData.password || !formData.confirmPassword) {
         setError('Please fill all required fields');
@@ -563,29 +564,27 @@ const ArtistRegistrationPage = ({ config }) => {
         setError('Passwords do not match');
         return false;
       }
-    }
-    
-    if (step === 2) {
       if (!formData.artistType || !formData.category) {
         setError('Please select artist type and category');
         return false;
       }
     }
-    
-    if (step === 3) {
+
+    // Step 2: Professional Information
+    if (step === 2) {
       if (!formData.experience || !formData.bio || !formData.location) {
         setError('Please fill all required fields');
         return false;
       }
     }
-    
-    // No validation for Step 4
+
+    // No validation for Step 3 (Portfolio)
     return true;
   };
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      if (currentStep < 4) {
+      if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       }
     }
@@ -653,7 +652,7 @@ const ArtistRegistrationPage = ({ config }) => {
         Personal Information
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
           <input
@@ -772,20 +771,20 @@ const ArtistRegistrationPage = ({ config }) => {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <div className="max-h-96 overflow-y-auto border-2 border-gray-200 rounded-xl p-6 bg-gray-50">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="max-h-96 overflow-y-auto overflow-x-hidden border-2 border-gray-200 rounded-xl p-5 bg-gray-50">
+            <div className="grid grid-cols-3 gap-3">
               {artistCategories.map(category => (
                 <button
                   key={category.id}
                   onClick={() => handleInputChange('category', category.id)}
-                  className={`p-6 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                  className={`p-3 rounded-xl border-2 transition-all transform hover:scale-105 flex flex-col items-center justify-center min-h-[90px] ${
                     formData.category === category.id
                       ? 'border-brand-500 bg-brand-50 shadow-lg'
                       : 'border-gray-200 hover:border-gray-300 bg-white shadow-md hover:shadow-lg'
                   }`}
                 >
-                  <div className="text-3xl mb-3">{category.icon}</div>
-                  <div className="text-sm font-medium">{category.name}</div>
+                  <div className="text-2xl mb-1">{category.icon}</div>
+                  <div className="text-xs font-medium text-center leading-tight">{category.name}</div>
                 </button>
               ))}
             </div>
@@ -793,54 +792,7 @@ const ArtistRegistrationPage = ({ config }) => {
           <p className="text-xs text-gray-500 mt-2">Scroll to see all categories</p>
         </div>
 
-        {/* Singer Subcategories - Only show when singer is selected and popup is closed */}
-        {showSubcategories && formData.category === 'singers' && !showCategoryPopup && (
-          <div className="animate-in slide-in-from-top duration-300">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <span className="text-brand-500">🎤</span>
-                Select Singer Subcategory
-              </span>
-            </label>
-            <div className="border-2 border-brand-200 rounded-xl p-6 bg-gradient-to-br from-brand-50 to-white">
-              <div className="space-y-4">
-                {Object.entries(allCategoriesData.singers?.subcategories || {}).map(([key, subcategory]) => (
-                  <div key={key} className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-all">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="text-2xl">{subcategory.icon}</span>
-                      <h4 className="font-semibold text-gray-800">{subcategory.name}</h4>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {subcategory.items.map((item) => (
-                        <button
-                          key={item}
-                          onClick={() => handleSubcategorySelect(item)}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105 ${
-                            formData.subcategory === item
-                              ? 'bg-brand-500 text-white shadow-md'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {item}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
               </div>
-              
-              {/* Selected Subcategory Display */}
-              {formData.subcategory && (
-                <div className="mt-4 p-3 bg-brand-100 border border-brand-300 rounded-lg">
-                  <p className="text-sm font-medium text-brand-700">
-                    Selected: <span className="font-bold">{formData.subcategory}</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 
@@ -993,6 +945,17 @@ const ArtistRegistrationPage = ({ config }) => {
     </div>
   );
 
+  const renderStep1Combined = () => (
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="md:col-span-6 bg-gray-50 border border-gray-200 rounded-2xl p-6 h-full">
+        {renderStep1()}
+      </div>
+      <div className="md:col-span-6 bg-gray-50 border border-gray-200 rounded-2xl p-6 h-full">
+        {renderStep2()}
+      </div>
+    </div>
+  );
+
   // Category Selection Popup
   const CategoryPopup = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1104,7 +1067,7 @@ const ArtistRegistrationPage = ({ config }) => {
 
   return (
     <div className="pt-24 pb-16 min-h-full" style={{ backgroundColor: config.background_color }}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
           <button 
@@ -1137,7 +1100,7 @@ const ArtistRegistrationPage = ({ config }) => {
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
                   step <= currentStep
@@ -1149,12 +1112,11 @@ const ArtistRegistrationPage = ({ config }) => {
                 <div className={`ml-3 text-sm font-medium ${
                   step <= currentStep ? 'text-brand-600' : 'text-gray-500'
                 }`}>
-                  {step === 1 && 'Personal Info'}
-                  {step === 2 && 'Category Selection'}
-                  {step === 3 && 'Professional Info'}
-                  {step === 4 && 'Portfolio'}
+                  {step === 1 && 'Personal + Category'}
+                  {step === 2 && 'Professional Info'}
+                  {step === 3 && 'Portfolio'}
                 </div>
-                {step < 4 && (
+                {step < 3 && (
                   <div className={`w-16 h-1 mx-4 ${
                     step < currentStep ? 'bg-brand-500' : 'bg-gray-200'
                   }`} />
@@ -1166,10 +1128,9 @@ const ArtistRegistrationPage = ({ config }) => {
 
         {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
+          {currentStep === 1 && renderStep1Combined()}
+          {currentStep === 2 && renderStep3()}
+          {currentStep === 3 && renderStep4()}
         </div>
 
         {/* Navigation Buttons */}
@@ -1186,7 +1147,7 @@ const ArtistRegistrationPage = ({ config }) => {
             Previous
           </button>
           
-          {currentStep < 4 ? (
+          {currentStep < 3 ? (
             <button
               onClick={handleNext}
               className="px-6 py-3 bg-brand-500 text-white rounded-xl font-semibold hover:bg-brand-600 transition-all"

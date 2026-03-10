@@ -10,7 +10,6 @@ exports.createBooking = async (req, res) => {
     try {
         const {
             artistId,
-            userId,
             name,
             email,
             phone,
@@ -21,6 +20,9 @@ exports.createBooking = async (req, res) => {
             requirements,
             message
         } = req.body;
+
+        // userId can come from the request body or from the authenticated session
+        const userId = req.body.userId || (req.user && req.user._id);
 
         // Validate required fields
         if (!artistId || !userId || !name || !email || !phone || !eventType || !eventDate || budget === undefined || budget === null || budget === '' || !eventLocation) {

@@ -21,6 +21,9 @@ const AdminDashboard = ({ config }) => {
   const [artists, setArtists] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  // Booking UI states
+  const [expandedBookingId, setExpandedBookingId] = useState(null);
+  const [statusDropdownId, setStatusDropdownId] = useState(null);
   const [analytics, setAnalytics] = useState({
     totalRevenue: 0,
     thisMonthRevenue: 0,
@@ -53,28 +56,13 @@ const AdminDashboard = ({ config }) => {
         setError(null);
 
         // Fetch all data in parallel
+        const authHeader = { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` };
         const [
           usersRes,
-          artistsRes,
-          bookingsRes,
-          inquiriesRes,
-          analyticsRes
+          bookingsRes
         ] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/users`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
-          }),
-          fetch(`${API_BASE_URL}/api/artists`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
-          }),
-          fetch(`${API_BASE_URL}/api/bookings`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
-          }),
-          fetch(`${API_BASE_URL}/api/inquiries`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
-          }),
-          fetch(`${API_BASE_URL}/api/analytics`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
-          })
+          fetch(`${API_BASE_URL}/api/admin/users`, { headers: authHeader }),
+          fetch(`${API_BASE_URL}/api/admin/bookings`, { headers: authHeader })
         ]);
 
         // Handle responses
@@ -83,24 +71,9 @@ const AdminDashboard = ({ config }) => {
           setUsers(usersData.data || usersData || []);
         }
 
-        if (artistsRes.ok) {
-          const artistsData = await artistsRes.json();
-          setArtists(artistsData.data || artistsData || []);
-        }
-
         if (bookingsRes.ok) {
           const bookingsData = await bookingsRes.json();
           setBookings(bookingsData.data || bookingsData || []);
-        }
-
-        if (inquiriesRes.ok) {
-          const inquiriesData = await inquiriesRes.json();
-          setInquiries(inquiriesData.data || inquiriesData || []);
-        }
-
-        if (analyticsRes.ok) {
-          const analyticsData = await analyticsRes.json();
-          setAnalytics(analyticsData.data || analyticsData || analytics);
         }
 
         // Mock notifications
@@ -142,6 +115,30 @@ const AdminDashboard = ({ config }) => {
     fetchDashboardData();
   }, [adminData, API_BASE_URL]);
 
+  const handleAdminBookingAction = async (bookingId, action) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/bookings/${bookingId}/${action}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Update the booking in local state without a full re-fetch
+        setBookings(prev => prev.map(b =>
+          (b._id === bookingId || b.id === bookingId) ? data.data : b
+        ));
+        setSuccessMessage(`Booking ${action === 'approve' ? 'approved' : 'rejected'} successfully!`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        alert(data.message || 'Failed to update booking');
+      }
+    } catch (err) {
+      console.error('Error updating booking:', err);
+      alert('Network error while updating booking.');
+    }
+  };
+
+
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
@@ -153,7 +150,7 @@ const AdminDashboard = ({ config }) => {
   };
 
   const handleMarkNotificationRead = (id) => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, isRead: true } : n)
     );
   };
@@ -191,7 +188,7 @@ const AdminDashboard = ({ config }) => {
       {/* Stats Cards - Theme Consistent */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="group relative overflow-hidden rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-             style={{ backgroundColor: getThemeColor('surface') }}>
+          style={{ backgroundColor: getThemeColor('surface') }}>
           <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColors(0)} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
           <div className="relative p-6">
             <div className="flex items-center justify-between mb-4">
@@ -218,7 +215,7 @@ const AdminDashboard = ({ config }) => {
         </div>
 
         <div className="group relative overflow-hidden rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-             style={{ backgroundColor: getThemeColor('surface') }}>
+          style={{ backgroundColor: getThemeColor('surface') }}>
           <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColors(1)} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
           <div className="relative p-6">
             <div className="flex items-center justify-between mb-4">
@@ -241,7 +238,7 @@ const AdminDashboard = ({ config }) => {
         </div>
 
         <div className="group relative overflow-hidden rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-             style={{ backgroundColor: getThemeColor('surface') }}>
+          style={{ backgroundColor: getThemeColor('surface') }}>
           <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColors(2)} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
           <div className="relative p-6">
             <div className="flex items-center justify-between mb-4">
@@ -264,7 +261,7 @@ const AdminDashboard = ({ config }) => {
         </div>
 
         <div className="group relative overflow-hidden rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-             style={{ backgroundColor: getThemeColor('surface') }}>
+          style={{ backgroundColor: getThemeColor('surface') }}>
           <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColors(3)} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
           <div className="relative p-6">
             <div className="flex items-center justify-between mb-4">
@@ -290,7 +287,7 @@ const AdminDashboard = ({ config }) => {
       {/* Recent Activity - Theme Consistent */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
-             style={{ backgroundColor: getThemeColor('surface') }}>
+          style={{ backgroundColor: getThemeColor('surface') }}>
           <div className={`bg-gradient-to-r ${getCategoryColors(4)} p-6`}>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +317,7 @@ const AdminDashboard = ({ config }) => {
         </div>
 
         <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
-             style={{ backgroundColor: getThemeColor('surface') }}>
+          style={{ backgroundColor: getThemeColor('surface') }}>
           <div className={`bg-gradient-to-r ${getCategoryColors(5)} p-6`}>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,7 +348,7 @@ const AdminDashboard = ({ config }) => {
   // Keep all other existing functions unchanged but with theme consistency
   const renderUsers = () => (
     <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
-         style={{ backgroundColor: getThemeColor('surface') }}>
+      style={{ backgroundColor: getThemeColor('surface') }}>
       <div className={`bg-gradient-to-r ${getCategoryColors(1)} p-6 flex justify-between items-center`}>
         <h3 className="text-xl font-bold text-white">User Management</h3>
         <button className="px-4 py-2 bg-white text-green-600 rounded-xl font-medium hover:bg-green-50 transition-colors">
@@ -370,8 +367,10 @@ const AdminDashboard = ({ config }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+            {users.length === 0 ? (
+              <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-400">No users found.</td></tr>
+            ) : users.map((user) => (
+              <tr key={user._id || user.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -402,63 +401,305 @@ const AdminDashboard = ({ config }) => {
           </tbody>
         </table>
       </div>
-    </div>
+    </div >
   );
 
-  const renderBookings = () => (
-    <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
-         style={{ backgroundColor: getThemeColor('surface') }}>
-      <div className={`bg-gradient-to-r ${getCategoryColors(3)} p-6 flex justify-between items-center`}>
-        <h3 className="text-xl font-bold text-white">Booking Management</h3>
-        <button className="px-4 py-2 bg-white text-orange-600 rounded-xl font-medium hover:bg-orange-50 transition-colors">
-          Export Bookings
-        </button>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artist</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {bookings.map((booking) => (
-              <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: getThemeColor('text') }}>#{booking.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.user}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.artist}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.date}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{booking.amount}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    booking.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {booking.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">View</button>
-                  <button className="text-red-600 hover:text-red-900">Cancel</button>
-                </td>
+
+  const handleInlineStatusChange = async (bookingId, newStatus) => {
+    const actionMap = { adminApproved: 'approve', rejected: 'reject', completed: 'complete' };
+    const action = actionMap[newStatus];
+    if (!action) return;
+    setStatusDropdownId(null);
+    await handleAdminBookingAction(bookingId, action);
+  };
+
+  const renderBookings = () => {
+    const getStatusStyle = (status) => {
+      if (status === 'adminApproved') return { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500', label: '✓ Approved' };
+      if (status === 'rejected') return { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500', label: '✗ Rejected' };
+      if (status === 'confirmed') return { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500', label: '✓ Confirmed' };
+      if (status === 'completed') return { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-400', label: '✓ Completed' };
+      if (status === 'artistRejected') return { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-400', label: '✗ Artist Declined' };
+      return { bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-400', label: '⏳ Pending' };
+    };
+
+    return (
+      <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden" style={{ backgroundColor: getThemeColor('surface') }}>
+        {/* Header */}
+        <div className={`bg-gradient-to-r ${getCategoryColors(3)} p-6 flex justify-between items-center`}>
+          <div>
+            <h3 className="text-xl font-bold text-white">Booking Management</h3>
+            <p className="text-white/80 text-sm mt-1">
+              {bookings.filter(b => b.status === 'pending').length} pending · {bookings.length} total
+            </p>
+          </div>
+          <span className="px-3 py-1 bg-white/20 text-white rounded-full text-sm font-medium">
+            {bookings.filter(b => b.status === 'adminApproved').length} awaiting artist
+          </span>
+        </div>
+
+        {/* Success toast */}
+        {successMessage && (
+          <div className="mx-6 mt-4 px-4 py-3 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm font-medium flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+            {successMessage}
+          </div>
+        )}
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-rose-50 border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-8">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {bookings.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <p className="text-gray-400 font-medium">No bookings yet</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : bookings.map((booking, idx) => {
+                const bookingId = booking._id || booking.id;
+                const isExpanded = expandedBookingId === bookingId;
+                const showDropdown = statusDropdownId === bookingId;
+                const st = getStatusStyle(booking.status);
+                const artistName = booking.artistId
+                  ? `${booking.artistId.firstName} ${booking.artistId.lastName}`
+                  : 'Unknown Artist';
+
+                return (
+                  <React.Fragment key={bookingId}>
+                    {/* Main row */}
+                    <tr
+                      className={`border-b border-gray-100 transition-colors cursor-pointer ${isExpanded ? 'bg-indigo-50/40' : 'hover:bg-gray-50'}`}
+                      onClick={() => setExpandedBookingId(isExpanded ? null : bookingId)}
+                    >
+                      <td className="px-4 py-4 text-sm font-semibold text-gray-500">{idx + 1}</td>
+
+                      <td className="px-4 py-4">
+                        <div className="font-semibold text-gray-800 text-sm">{booking.userId?.name || booking.name || '—'}</div>
+                        <div className="text-xs text-gray-400 mt-0.5">{booking.userId?.email || booking.email || ''}</div>
+                      </td>
+
+                      <td className="px-4 py-4 text-sm text-gray-600">{booking.phone || booking.userId?.phone || '—'}</td>
+
+                      <td className="px-4 py-4 text-sm text-gray-700">{booking.eventType || '—'}</td>
+
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm text-indigo-600 font-medium">
+                            {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Artist type chip */}
+                      <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+                          </svg>
+                          {booking.artistId?.artistType?.charAt(0)?.toUpperCase() || 'A'}
+                        </span>
+                      </td>
+
+                      {/* Inline status dropdown */}
+                      <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
+                        <div className="relative">
+                          <button
+                            onClick={() => setStatusDropdownId(showDropdown ? null : bookingId)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${st.bg} ${st.text} border-current/20 hover:shadow-sm`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
+                            {st.label}
+                            <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {/* Dropdown menu */}
+                          {showDropdown && (
+                            <div className="absolute left-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => handleInlineStatusChange(bookingId, 'pending')}
+                                  disabled={booking.status === 'pending'}
+                                  className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-yellow-50 transition-colors disabled:opacity-40"
+                                >
+                                  <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                                  <span className="text-yellow-700 font-medium">Pending</span>
+                                </button>
+                                <button
+                                  onClick={() => handleInlineStatusChange(bookingId, 'adminApproved')}
+                                  disabled={booking.status === 'adminApproved'}
+                                  className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-green-50 transition-colors disabled:opacity-40"
+                                >
+                                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                  <span className="text-green-700 font-medium">✓ Approved</span>
+                                </button>
+                                <button
+                                  onClick={() => handleInlineStatusChange(bookingId, 'rejected')}
+                                  disabled={booking.status === 'rejected'}
+                                  className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-red-50 transition-colors disabled:opacity-40"
+                                >
+                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                  <span className="text-red-700 font-medium">✗ Rejected</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Eye icon */}
+                      <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => setExpandedBookingId(isExpanded ? null : bookingId)}
+                          className={`p-2 rounded-full transition-all ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'text-gray-400 hover:text-indigo-500 hover:bg-indigo-50'}`}
+                          title="View details"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Expanded detail panel */}
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan="8" className="px-0 py-0 bg-gray-50 border-b border-gray-200">
+                          <div className="px-6 py-5">
+                            {/* Detail grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4 mb-5">
+                              <div>
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Email</p>
+                                <p className="text-sm font-semibold text-gray-800">{booking.userId?.email || booking.email || '—'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Phone</p>
+                                <p className="text-sm font-semibold text-gray-800">{booking.phone || '—'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Budget</p>
+                                <p className="text-sm font-semibold text-gray-800">₹{(booking.budget || 0).toLocaleString('en-IN')}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Event Date</p>
+                                <p className="text-sm font-semibold text-gray-800 flex items-center gap-1">
+                                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-IN') : '—'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">City</p>
+                                <p className="text-sm font-semibold text-gray-800">{booking.eventLocation || '—'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Created On</p>
+                                <p className="text-sm font-semibold text-gray-800">
+                                  {booking.createdAt ? new Date(booking.createdAt).toLocaleString('en-IN') : '—'}
+                                </p>
+                              </div>
+                              <div className="md:col-span-3">
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Vendor / Artist</p>
+                                <p className="text-sm font-semibold text-indigo-600">{artistName}</p>
+                              </div>
+                            </div>
+
+                            {/* Message box */}
+                            {booking.message && (
+                              <div className="mb-5">
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Message</p>
+                                <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700">
+                                  {booking.message}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action buttons */}
+                            <div className="flex flex-wrap items-center gap-3">
+                              {(booking.status === 'pending' || booking.status === 'rejected') && (
+                                <button
+                                  onClick={() => handleAdminBookingAction(bookingId, 'approve')}
+                                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg active:scale-95"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  Forward to Artist
+                                </button>
+                              )}
+                              {booking.status === 'adminApproved' && (
+                                <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-50 text-green-700 text-sm font-semibold rounded-xl border border-green-200">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  Forwarded to Artist
+                                </span>
+                              )}
+                              {booking.status === 'confirmed' && (
+                                <button
+                                  onClick={() => handleAdminBookingAction(bookingId, 'complete')}
+                                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Mark as Completed
+                                </button>
+                              )}
+                              {!['rejected', 'artistRejected', 'completed'].includes(booking.status) && (
+                                <button
+                                  onClick={() => handleAdminBookingAction(bookingId, 'reject')}
+                                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-orange-600 transition-all shadow-md hover:shadow-lg active:scale-95"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                  </svg>
+                                  Make Inactive
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
 
   const renderInquiries = () => (
     <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
-         style={{ backgroundColor: getThemeColor('surface') }}>
+      style={{ backgroundColor: getThemeColor('surface') }}>
       <div className={`bg-gradient-to-r ${getCategoryColors(6)} p-6 flex justify-between items-center`}>
         <h3 className="text-xl font-bold text-white">Inquiry Management</h3>
         <button className="px-4 py-2 bg-white text-pink-600 rounded-xl font-medium hover:bg-pink-50 transition-colors">
@@ -485,11 +726,10 @@ const AdminDashboard = ({ config }) => {
                 <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{inquiry.message}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inquiry.date}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    inquiry.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inquiry.status === 'resolved' ? 'bg-green-100 text-green-800' :
                     inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                      'bg-red-100 text-red-800'
+                    }`}>
                     {inquiry.status}
                   </span>
                 </td>
@@ -507,7 +747,7 @@ const AdminDashboard = ({ config }) => {
 
   const renderAnalytics = () => (
     <div className="rounded-2xl shadow-lg border border-gray-100 p-8"
-         style={{ backgroundColor: getThemeColor('surface') }}>
+      style={{ backgroundColor: getThemeColor('surface') }}>
       <h3 className="text-2xl font-bold mb-6" style={{ color: getThemeColor('text') }}>
         Analytics Dashboard
       </h3>
@@ -529,7 +769,7 @@ const AdminDashboard = ({ config }) => {
             </div>
           </div>
         </div>
-        
+
         <div className={`bg-gradient-to-br ${getCategoryColors(0)} bg-opacity-10 rounded-2xl p-6`}>
           <h4 className="text-lg font-semibold mb-4">User Analytics</h4>
           <div className="space-y-3">
@@ -553,7 +793,7 @@ const AdminDashboard = ({ config }) => {
 
   const renderSettings = () => (
     <div className="rounded-2xl shadow-lg border border-gray-100 p-8"
-         style={{ backgroundColor: getThemeColor('surface') }}>
+      style={{ backgroundColor: getThemeColor('surface') }}>
       <h3 className="text-2xl font-bold mb-6" style={{ color: getThemeColor('text') }}>
         Admin Settings
       </h3>
@@ -575,7 +815,7 @@ const AdminDashboard = ({ config }) => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-gray-50 rounded-2xl p-6">
           <h4 className="text-lg font-semibold mb-4">Security Settings</h4>
           <div className="space-y-4">
@@ -648,7 +888,7 @@ const AdminDashboard = ({ config }) => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 {/* Notifications */}
                 <div className="relative">
@@ -669,7 +909,7 @@ const AdminDashboard = ({ config }) => {
                   {/* Notifications Dropdown */}
                   {showNotifications && (
                     <div className="absolute right-0 mt-2 w-96 rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                         style={{ backgroundColor: getThemeColor('surface') }}>
+                      style={{ backgroundColor: getThemeColor('surface') }}>
                       <div className={`bg-gradient-to-r ${getCategoryColors(0)} p-4 flex justify-between items-center`}>
                         <h3 className="font-bold text-white">Notifications</h3>
                         {notifications.filter(n => !n.isRead).length > 0 && (
@@ -686,9 +926,8 @@ const AdminDashboard = ({ config }) => {
                           <div
                             key={notification.id}
                             onClick={() => handleMarkNotificationRead(notification.id)}
-                            className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                              !notification.isRead ? 'bg-blue-50' : ''
-                            }`}
+                            className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''
+                              }`}
                           >
                             <div className="flex items-start gap-3">
                               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -741,11 +980,10 @@ const AdminDashboard = ({ config }) => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`group relative px-6 py-4 font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 rounded-t-xl ${
-                  activeTab === tab
-                    ? 'text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`group relative px-6 py-4 font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0 rounded-t-xl ${activeTab === tab
+                  ? 'text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 style={{
                   backgroundColor: activeTab === tab ? undefined : 'transparent'
                 }}
@@ -777,7 +1015,7 @@ const AdminDashboard = ({ config }) => {
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'artists' && (
           <div className="rounded-2xl shadow-lg border border-gray-100 p-8"
-               style={{ backgroundColor: getThemeColor('surface') }}>
+            style={{ backgroundColor: getThemeColor('surface') }}>
             <h3 className="text-2xl font-bold mb-4" style={{ color: getThemeColor('text') }}>
               Artist Management
             </h3>

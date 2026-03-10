@@ -27,7 +27,7 @@ router.use(adminOnly);
 router.get('/bookings', getAllBookings);
 
 // Route for updating booking status
-router.post('/bookings/:id/:action', updateBookingStatus);
+router.patch('/bookings/:id/:action', updateBookingStatus);
 
 // Users Routing
 router.get('/users', getAllUsers);

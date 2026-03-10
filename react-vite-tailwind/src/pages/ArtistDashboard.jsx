@@ -348,15 +348,15 @@ const ArtistDashboard = ({ config }) => {
       <div className="bg-gray-50 rounded-xl p-6">
         <h4 className="text-lg font-medium text-gray-800 mb-4">Recent Transactions</h4>
         <div className="space-y-3">
-          {bookings.slice(0, 5).map((booking) => (
-            <div key={booking.id} className="flex justify-between items-center py-3 border-b border-gray-200 last:border-0">
+          {bookings.filter(b => b.status === 'completed').slice(0, 5).map((booking) => (
+            <div key={booking._id || booking.id} className="flex justify-between items-center py-3 border-b border-gray-200 last:border-0">
               <div>
-                <div className="font-medium text-gray-800">{booking.clientName}</div>
-                <div className="text-sm text-gray-600">{booking.event}</div>
+                <div className="font-medium text-gray-800">{booking.userId?.name || booking.name || 'Client'}</div>
+                <div className="text-sm text-gray-600">{booking.eventType || 'Event'}</div>
               </div>
               <div className="text-right">
-                <div className="font-medium text-gray-800">₹{booking.amount.toLocaleString()}</div>
-                <div className="text-sm text-gray-600">{booking.eventDate}</div>
+                <div className="font-medium text-gray-800">₹{(booking.budget || 0).toLocaleString()}</div>
+                <div className="text-sm text-gray-600">{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : ''}</div>
               </div>
             </div>
           ))}

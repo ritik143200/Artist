@@ -11,7 +11,7 @@ const getAllBookings = async (req, res) => {
             .populate('artistId', 'firstName lastName profileImage')
             .sort({ createdAt: -1 });
 
-        res.status(200).json(bookings);
+        res.status(200).json({ success: true, count: bookings.length, data: bookings });
     } catch (error) {
         console.error('Error fetching all bookings:', error);
         res.status(500).json({
@@ -23,29 +23,33 @@ const getAllBookings = async (req, res) => {
 };
 
 // @desc    Update booking status (Admin)
-// @route   POST /api/admin/bookings/:id/:action
+// @route   PATCH /api/admin/bookings/:id/:action
 // @access  Private/Admin
 const updateBookingStatus = async (req, res) => {
     try {
         const { id, action } = req.params;
 
         let status;
-        if (action === 'accept') status = 'accepted';
-        else if (action === 'approve') status = 'adminApproved';
+        if (action === 'approve') status = 'adminApproved';
         else if (action === 'reject') status = 'rejected';
         else if (action === 'complete') status = 'completed';
-        else return res.status(400).json({ message: 'Invalid action' });
+        else return res.status(400).json({ success: false, message: 'Invalid action. Use: approve, reject, complete' });
 
         const booking = await Booking.findById(id);
 
         if (!booking) {
-            return res.status(404).json({ message: 'Booking not found' });
+            return res.status(404).json({ success: false, message: 'Booking not found' });
         }
 
         booking.status = status;
         await booking.save();
 
-        res.status(200).json(booking);
+        // Return fully populated booking so frontend can update state directly
+        const populated = await Booking.findById(id)
+            .populate('userId', 'name email phone')
+            .populate('artistId', 'firstName lastName profileImage');
+
+        res.status(200).json({ success: true, data: populated });
     } catch (error) {
         console.error(`Error updating booking status:`, error);
         res.status(500).json({

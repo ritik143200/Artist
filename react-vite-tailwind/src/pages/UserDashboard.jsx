@@ -57,15 +57,15 @@ const UserDashboard = ({ config }) => {
       {/* User Profile Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
         <h3 className="text-2xl font-bold text-gray-800 mb-6">User Profile</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Profile Picture */}
           <div className="text-center">
             <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
               {userData?.profileImage ? (
-                <img 
-                  src={userData.profileImage} 
-                  alt="Profile" 
+                <img
+                  src={userData.profileImage}
+                  alt="Profile"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -78,41 +78,41 @@ const UserDashboard = ({ config }) => {
               Change Photo
             </button>
           </div>
-          
+
           {/* User Information */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input 
-                type="text" 
-                value={userData?.name || ''} 
+              <input
+                type="text"
+                value={userData?.name || ''}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 readOnly
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input 
-                type="email" 
-                value={userData?.email || ''} 
+              <input
+                type="email"
+                value={userData?.email || ''}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 readOnly
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input 
-                type="tel" 
-                value={userData?.phone || 'Not provided'} 
+              <input
+                type="tel"
+                value={userData?.phone || 'Not provided'}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 readOnly
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input 
-                type="text" 
-                value={userData?.location || 'Not provided'} 
+              <input
+                type="text"
+                value={userData?.location || 'Not provided'}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 readOnly
               />
@@ -166,7 +166,7 @@ const UserDashboard = ({ config }) => {
       {/* Account Settings */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
         <h3 className="text-xl font-bold text-gray-800 mb-6">Account Settings</h3>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-3">
@@ -256,7 +256,7 @@ const UserDashboard = ({ config }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-gray-800">{bookings.filter(b => b.status === 'pending' || b.status === 'accepted').length}</span>
+          <span className="text-2xl font-bold text-gray-800">{bookings.filter(b => ['pending', 'adminApproved', 'confirmed'].includes(b.status)).length}</span>
         </div>
         <h3 className="text-gray-600 text-sm font-medium">Upcoming Events</h3>
       </div>
@@ -318,13 +318,27 @@ const UserDashboard = ({ config }) => {
                   <div className="text-sm font-medium text-gray-900">₹{booking.budget?.toLocaleString()}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === 'accepted' || booking.status === 'completed'
-                    ? 'bg-green-100 text-green-800'
-                    : booking.status === 'rejected'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-yellow-100 text-yellow-800'
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === 'confirmed'
+                      ? 'bg-green-100 text-green-800'
+                      : booking.status === 'completed'
+                        ? 'bg-blue-100 text-blue-800'
+                        : booking.status === 'adminApproved'
+                          ? 'bg-purple-100 text-purple-800'
+                          : ['rejected', 'artistRejected'].includes(booking.status)
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    {booking.status === 'adminApproved'
+                      ? 'Pending Artist'
+                      : booking.status === 'artistRejected'
+                        ? 'Artist Declined'
+                        : booking.status === 'confirmed'
+                          ? 'Confirmed'
+                          : booking.status === 'completed'
+                            ? 'Completed'
+                            : booking.status === 'rejected'
+                              ? 'Rejected'
+                              : 'Pending'}
                   </span>
                 </td>
               </tr>

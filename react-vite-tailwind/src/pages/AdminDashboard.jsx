@@ -109,33 +109,20 @@ const AdminDashboard = ({ config }) => {
           conversionRate: 12.5
         });
 
-        // Mock notifications
-        setNotifications([
-          {
-            id: 1,
-            title: 'New User Registration',
-            message: 'John Doe just registered on platform',
-            time: '2 minutes ago',
-            isRead: false,
-            type: 'user'
-          },
-          {
-            id: 2,
-            title: 'New Booking',
-            message: 'A new booking was made for Artist XYZ',
-            time: '5 minutes ago',
-            isRead: false,
-            type: 'booking'
-          },
-          {
-            id: 3,
-            title: 'Pending Inquiry',
-            message: 'You have 3 pending inquiries to review',
-            time: '10 minutes ago',
-            isRead: true,
-            type: 'inquiry'
+        // Fetch notifications
+        try {
+          const notifRes = await fetch(`${API_BASE_URL}/api/admin/notifications`, {
+            headers: authHeader
+          });
+          if (notifRes.ok) {
+            const notifData = await notifRes.json();
+            // The backend returns an array directly, not wrapped in { data: [...] }
+            setNotifications(Array.isArray(notifData) ? notifData : []);
           }
-        ]);
+        } catch (notifErr) {
+          console.error('Error fetching notifications:', notifErr);
+          setNotifications([]);
+        }
 
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -189,14 +176,34 @@ const AdminDashboard = ({ config }) => {
     navigate('home');
   };
 
-  const handleMarkAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/notifications/read-all`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      }
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
   };
 
-  const handleMarkNotificationRead = (id) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-    );
+  const handleMarkNotificationRead = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/notifications/${id}/read`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` }
+      });
+      if (res.ok) {
+        setNotifications(prev =>
+          prev.map(n => (n._id === id || n.id === id) ? { ...n, isRead: true } : n)
+        );
+      }
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
   };
 
   // Helper function to filter bookings based on status
@@ -1039,17 +1046,23 @@ const AdminDashboard = ({ config }) => {
                       <div className="max-h-96 overflow-y-auto">
                         {notifications.map((notification) => (
                           <div
-                            key={notification.id}
-                            onClick={() => handleMarkNotificationRead(notification.id)}
+                            key={notification._id || notification.id}
+                            onClick={() => handleMarkNotificationRead(notification._id || notification.id)}
                             className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''
                               }`}
                           >
                             <div className="flex items-start gap-3">
                               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                               <div className="flex-1">
-                                <h4 className="font-semibold text-sm" style={{ color: getThemeColor('text') }}>{notification.title}</h4>
+                                <h4 className="font-semibold text-sm capitalize" style={{ color: getThemeColor('text') }}>
+                                  {notification.type} Notification
+                                </h4>
                                 <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
-                                <p className="text-xs text-gray-400 mt-2">{notification.time}</p>
+                                <p className="text-xs text-gray-400 mt-2">
+                                  {notification.createdAt 
+                                    ? new Date(notification.createdAt).toLocaleString('en-IN') 
+                                    : notification.time || 'Just now'}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -1191,15 +1204,18 @@ const AdminDashboard = ({ config }) => {
 
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {artist.categories?.slice(0, 2).map((category, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
-                              {category}
+                          {artist.category && (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium capitalize">
+                              {artist.category}
                             </span>
-                          ))}
-                          {artist.categories?.length > 2 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                              +{artist.categories.length - 2}
+                          )}
+                          {artist.subcategory && (
+                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium capitalize">
+                              {artist.subcategory}
                             </span>
+                          )}
+                          {!artist.category && !artist.subcategory && (
+                            <span className="text-gray-400 text-sm">Not specified</span>
                           )}
                         </div>
                       </td>
@@ -1210,7 +1226,7 @@ const AdminDashboard = ({ config }) => {
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
-                            {artist.phone || 'Not provided'}
+                            {artist.phone || artist.contact || 'Not provided'}
                           </div>
                         </div>
                       </td>

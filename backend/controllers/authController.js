@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Artist = require('../models/Artist');
+const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -32,6 +33,16 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+      try {
+        await Notification.create({
+          type: 'user',
+          message: `New user registration: ${user.name}`,
+          relatedId: user._id
+        });
+      } catch (err) {
+        console.error('Failed to create notification for new user:', err);
+      }
+
       res.status(201).json({
         _id: user._id,
         name: user.name,

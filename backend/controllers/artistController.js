@@ -1,4 +1,5 @@
 const Artist = require('../models/Artist');
+const Notification = require('../models/Notification');
 const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -119,6 +120,16 @@ const registerArtist = async (req, res) => {
     });
 
     await newArtist.save();
+
+    try {
+      await Notification.create({
+        type: 'general',
+        message: `New artist registration: ${newArtist.firstName} ${newArtist.lastName}`,
+        relatedId: newArtist._id
+      });
+    } catch (err) {
+      console.error('Failed to create notification for new artist:', err);
+    }
 
     res.status(201).json({
       success: true,

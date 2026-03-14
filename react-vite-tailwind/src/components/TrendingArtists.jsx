@@ -7,6 +7,30 @@ const TrendingArtists = ({ config }) => {
   const [loading, setLoading] = useState(true);
   const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/$/, '');
 
+  // Refresh handler for individual artist
+  const handleArtistRefresh = async (artistId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const updatedArtist = await response.json();
+        
+        // Update the specific artist in the trendingArtists array
+        setTrendingArtists(prev => prev.map(artist => 
+          (artist._id === artistId || artist.id === artistId) 
+            ? { ...artist, ...updatedArtist.data || updatedArtist }
+            : artist
+        ));
+      }
+    } catch (error) {
+      console.log('Failed to refresh artist:', error);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -181,7 +205,12 @@ const TrendingArtists = ({ config }) => {
               className="animate-fadeIn flex-shrink-0"
               style={{ animationDelay: `${index * 0.06}s` }}
             >
-              <ArtistCard artist={artist} config={config} variant="trendingCompact" />
+              <ArtistCard 
+                artist={artist} 
+                config={config} 
+                variant="trendingCompact" 
+                onRefresh={handleArtistRefresh}
+              />
             </div>
           ))}
 

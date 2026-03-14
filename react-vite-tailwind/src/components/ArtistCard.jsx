@@ -1,10 +1,14 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import { useRouter } from '../contexts/RouterContext';
 import ArtistInquiry from './ArtistInquiry';
 
-const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default' }) => {
+const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default', onRefresh }) => {
   const { navigate } = useRouter();
   const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const cardRef = useRef(null);
+  const observerRef = useRef(null);
 
   const normalizeNumber = (value) => {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -14,6 +18,80 @@ const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default' }) 
     }
     return 0;
   };
+
+  // Auto-refresh functionality like Instagram feed
+  useEffect(() => {
+    // Intersection Observer for auto-refresh when card comes into view
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isRefreshing) {
+          // Check if card needs refresh (older than 30 seconds)
+          const timeSinceUpdate = new Date() - lastUpdated;
+          if (timeSinceUpdate > 30000) { // 30 seconds
+            await handleAutoRefresh();
+          }
+        }
+      },
+      {
+        threshold: 0.5, // Card is 50% visible
+        rootMargin: '50px' // Start loading 50px before card comes into view
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+      observerRef.current = observer;
+    }
+
+    // Auto-refresh interval (every 2 minutes)
+    const intervalId = setInterval(async () => {
+      if (document.visibilityState === 'visible') {
+        await handleAutoRefresh();
+      }
+    }, 120000); // 2 minutes
+
+    // Listen for visibility change (tab switching)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        const timeSinceUpdate = new Date() - lastUpdated;
+        if (timeSinceUpdate > 30000) { // 30 seconds
+          await handleAutoRefresh();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [lastUpdated, isRefreshing]);
+
+  // Auto-refresh handler
+  const handleAutoRefresh = async () => {
+    if (isRefreshing || !onRefresh) return;
+    
+    setIsRefreshing(true);
+    try {
+      await onRefresh(artist._id || artist.id);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.log('Auto-refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Manual refresh handler
+  const handleManualRefresh = async (e) => {
+    e.stopPropagation();
+    await handleAutoRefresh();
+  };          
 
   // Handle both backend and mock data structures
   const artistName = artist.fullName || 
@@ -47,10 +125,35 @@ const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default' }) 
     return (
       <>
         <div 
+          ref={cardRef}
           onClick={() => navigate('artist', { artistId: artist._id || artist.id, artist })}
-          className="w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 hover:shadow-lg hover:shadow-orange-500/10 transition-[box-shadow,border-color] duration-300 cursor-pointer hover:border-orange-200"
+          className="w-full min-w-0 max-w-full overflow-x-hidden rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 hover:shadow-lg hover:shadow-orange-500/10 transition-[box-shadow,border-color] duration-300 cursor-pointer hover:border-orange-200 relative"
           style={{ backgroundColor: config.surface_color }}
         >
+          {/* Refresh Indicator */}
+          {isRefreshing && (
+            <div className="absolute top-2 right-2 z-10">
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                <svg className="w-3 h-3 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* Manual Refresh Button */}
+          {onRefresh && (
+            <button
+              onClick={handleManualRefresh}
+              className="absolute top-2 right-2 z-10 w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-md transition-colors opacity-0 group-hover:opacity-100"
+              title="Refresh artist data"
+            >
+              <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )}
           <div className="w-full min-w-0 flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap md:items-start md:gap-6 lg:gap-8">
           {/* Artist Image */}
           <div className="flex-shrink-0 mx-auto md:mx-0 w-fit">
@@ -58,6 +161,8 @@ const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default' }) 
               <div className="relative w-[120px] sm:w-[140px]" style={{ aspectRatio: '1/1.54' }}>
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-gray-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner" style={{ backgroundColor: config.surface_color }}>
                   {isImageURL ? (
+
+                    
                     <img 
                       src={artistImage} 
                       alt={artistName}
@@ -259,16 +364,41 @@ const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default' }) 
   if (variant === 'trendingCompact') {
     return (
       <div
+        ref={cardRef}
         onClick={() => {
           navigate('artist', { artistId: artist._id || artist.id, artist });
         }}
-        className="group flex-shrink-0 w-[218px] sm:w-[228px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1"
+        className="group flex-shrink-0 w-[218px] sm:w-[228px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 relative"
         style={{
           backgroundColor: config.surface_color,
           border: `1px solid ${config.secondary_action}24`,
           boxShadow: `0 14px 28px -22px ${config.text_color}66`
         }}
       >
+        {/* Refresh Indicator */}
+        {isRefreshing && (
+          <div className="absolute top-2 right-2 z-10">
+            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+              <svg className="w-2.5 h-2.5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {/* Manual Refresh Button */}
+        {onRefresh && (
+          <button
+            onClick={handleManualRefresh}
+            className="absolute top-2 right-2 z-10 w-5 h-5 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-md transition-colors opacity-0 group-hover:opacity-100"
+            title="Refresh artist data"
+          >
+            <svg className="w-2.5 h-2.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        )}
         <div className="relative" style={{ aspectRatio: '1/1' }}>
           <div
             className="absolute inset-0 flex items-center justify-center overflow-hidden"
@@ -376,16 +506,41 @@ const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default' }) 
   // Original card layout (grid)
   return (
     <div
+      ref={cardRef}
       onClick={() => {
         navigate('artist', { artistId: artist._id || artist.id, artist });
       }}
-      className="group flex-shrink-0 w-64 lg:w-72 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1"
+      className="group flex-shrink-0 w-64 lg:w-72 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 relative"
       style={{
         backgroundColor: config.surface_color,
         border: `1px solid ${config.secondary_action}2A`,
         boxShadow: `0 16px 36px -24px ${config.text_color}66`
       }}
     >
+      {/* Refresh Indicator */}
+      {isRefreshing && (
+        <div className="absolute top-3 right-3 z-10">
+          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+            <svg className="w-3 h-3 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Refresh Button */}
+      {onRefresh && (
+        <button
+          onClick={handleManualRefresh}
+          className="absolute top-3 right-3 z-10 w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-md transition-colors opacity-0 group-hover:opacity-100"
+          title="Refresh artist data"
+        >
+          <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      )}
       <div className="p-3 pb-0">
         <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '1/1.22' }}>
           <div

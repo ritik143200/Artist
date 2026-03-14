@@ -477,6 +477,30 @@ const CategoryPage = ({ config }) => {
   const searchQuery = params.search;
   const subcategory = params.subcategory;
   
+  // Refresh handler for individual artist
+  const handleArtistRefresh = async (artistId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const updatedArtist = await response.json();
+        
+        // Update the specific artist in the artists array
+        setArtists(prev => prev.map(artist => 
+          (artist._id === artistId || artist.id === artistId) 
+            ? { ...artist, ...updatedArtist.data || updatedArtist }
+            : artist
+        ));
+      }
+    } catch (error) {
+      console.log('Failed to refresh artist:', error);
+    }
+  };
+  
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1197,7 +1221,7 @@ const CategoryPage = ({ config }) => {
                     key={artist._id || artist.id || index}
                     className="w-full min-w-0"
                   >
-                    {ArtistCard && <ArtistCard artist={artist} config={config || {}} fullWidth={true} />}
+                    {ArtistCard && <ArtistCard artist={artist} config={config || {}} fullWidth={true} onRefresh={handleArtistRefresh} />}
                   </div>
                 ))}
               </div>

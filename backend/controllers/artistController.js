@@ -1,5 +1,6 @@
 const Artist = require('../models/Artist');
 const Notification = require('../models/Notification');
+const bcrypt = require('bcryptjs');
 const { upload } = require('../config/cloudinaryConfig');
 
 // Register new artist

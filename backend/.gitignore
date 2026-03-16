@@ -1,3 +1,7 @@
 node_modules
 .env
-.env.example 
+.env.example
+uploads/
+dist/
+*.log
+.DS_Store

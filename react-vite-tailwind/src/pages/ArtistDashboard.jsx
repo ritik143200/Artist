@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../contexts/RouterContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const ArtistDashboard = ({ config }) => {
   const { navigate } = useRouter();
-  const [artistData, setArtistData] = useState(null);
+  const { user: authUser, updateUser: updateAuthUser } = useAuth();
+  const [artistData, setArtistData] = useState(authUser || null);
   const [activeTab, setActiveTab] = useState('overview');
   const [bookings, setBookings] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
@@ -12,12 +14,12 @@ const ArtistDashboard = ({ config }) => {
     thisMonth: 0,
     pending: 0
   });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    // Load artist data from localStorage
-    const storedUser = localStorage.getItem('userData');
-    if (storedUser) {
-      setArtistData(JSON.parse(storedUser));
+    // Sync with auth user if it exists
+    if (authUser) {
+      setArtistData(authUser);
     }
 
     const fetchArtistData = async () => {
@@ -125,6 +127,54 @@ const ArtistDashboard = ({ config }) => {
     } catch (error) {
       console.error(`Error performing action ${action}:`, error);
       alert('Network error occurred while updating booking.');
+    }
+  };
+
+  const handleProfileImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profileImage', file);
+
+    setUploading(true);
+    try {
+      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/$/, '');
+      const response = await fetch(`${API_BASE_URL}/api/artist/${artistData._id || artistData.id}/upload-profile-picture`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const updatedArtist = result.data;
+        
+        // Update local state
+        setArtistData(updatedArtist);
+        
+        // Update auth context
+        updateAuthUser(updatedArtist);
+        
+        alert('Profile picture updated successfully!');
+      } else {
+        const errData = await response.json();
+        console.error('Upload failed with status:', response.status, errData);
+        alert(errData.message || `Upload failed (${response.status}). Please try again.`);
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      alert(`Network error: ${error.message}. Please check your connection.`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -428,6 +478,39 @@ const ArtistDashboard = ({ config }) => {
         {activeTab === 'profile' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             <h3 className="text-xl font-bold text-gray-800 mb-6">Artist Profile</h3>
+            
+            {/* Profile Picture Section */}
+            <div className="mb-8 flex flex-col items-center">
+              <div className="relative group">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-brand-100 shadow-md bg-gray-100 flex items-center justify-center">
+                  {artistData?.profileImage ? (
+                    <img 
+                      src={artistData.profileImage} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-4xl text-gray-400 font-bold">
+                      {artistData?.firstName?.charAt(0) || artistData?.name?.charAt(0) || 'A'}
+                    </span>
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                      <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 bg-brand-500 text-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-brand-600 transition-colors group-hover:scale-110 duration-200">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <input type="file" className="hidden" onChange={handleProfileImageChange} accept="image/*" disabled={uploading} />
+                </label>
+              </div>
+              <p className="mt-3 text-sm text-gray-500 font-medium">Click the camera icon to update your profile photo</p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Artist Name</label>

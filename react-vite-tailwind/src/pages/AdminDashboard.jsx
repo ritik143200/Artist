@@ -25,7 +25,7 @@ const AdminDashboard = ({ config }) => {
   // Booking UI states
   const [expandedBookingId, setExpandedBookingId] = useState(null);
   const [statusDropdownId, setStatusDropdownId] = useState(null);
-  
+
   // Artist detail modal state
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [showArtistModal, setShowArtistModal] = useState(false);
@@ -87,12 +87,12 @@ const AdminDashboard = ({ config }) => {
             'Authorization': `Bearer ${localStorage.getItem('userToken')}`
           }
         });
-        
+
         if (artistsRes.ok) {
           const artistsData = await artistsRes.json();
-          const artistsArray = Array.isArray(artistsData.data) ? artistsData.data : 
-                              Array.isArray(artistsData) ? artistsData : 
-                              Array.isArray(artistsData.artists) ? artistsData.artists : [];
+          const artistsArray = Array.isArray(artistsData.data) ? artistsData.data :
+            Array.isArray(artistsData) ? artistsData :
+              Array.isArray(artistsData.artists) ? artistsData.artists : [];
           setArtists(artistsArray);
         }
 
@@ -148,7 +148,7 @@ const AdminDashboard = ({ config }) => {
         setBookings(prev => prev.map(b =>
           (b._id === bookingId || b.id === bookingId) ? updatedBooking : b
         ));
-        
+
         // Emit custom event for real-time User Dashboard updates
         window.dispatchEvent(new CustomEvent('bookingStatusUpdated', {
           detail: {
@@ -157,7 +157,7 @@ const AdminDashboard = ({ config }) => {
             timestamp: new Date().toISOString()
           }
         }));
-        
+
         setSuccessMessage(`Booking ${action === 'approve' ? 'approved' : 'rejected'} successfully!`);
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
@@ -205,13 +205,18 @@ const AdminDashboard = ({ config }) => {
       console.error('Failed to mark notification as read:', err);
     }
   };
+  // handle edit user
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setIsEditUserModalOpen(true);
+  };
 
   // Helper function to filter bookings based on status
   const getFilteredBookings = () => {
     if (bookingFilter === 'all') {
       return bookings;
     }
-    
+
     const statusMap = {
       'pending': 'pending',
       'approved': 'adminApproved',
@@ -220,7 +225,7 @@ const AdminDashboard = ({ config }) => {
       'rejected': 'rejected',
       'artistRejected': 'artistRejected'
     };
-    
+
     const targetStatus = statusMap[bookingFilter];
     return bookings.filter(booking => booking.status === targetStatus);
   };
@@ -474,7 +479,7 @@ const AdminDashboard = ({ config }) => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                  <button className="text-indigo-600 hover:text-indigo-900 mr-3" onClick={handleEditUser}>Edit</button>
                   <button className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>
@@ -515,11 +520,11 @@ const AdminDashboard = ({ config }) => {
                 {bookings.filter(b => b.status === 'pending').length} pending · {bookings.length} total
               </p>
             </div>
-            
+
             {/* Status Filter */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-white/80">Filter:</label>
-              <select 
+              <select
                 value={bookingFilter}
                 onChange={(e) => setBookingFilter(e.target.value)}
                 className="px-3 py-2 text-sm border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 text-white backdrop-blur-sm"
@@ -534,14 +539,14 @@ const AdminDashboard = ({ config }) => {
               </select>
             </div>
           </div>
-          
+
           {/* Filter Summary */}
           {bookingFilter !== 'all' && (
             <div className="mt-3 flex items-center justify-between">
               <span className="text-sm text-white/80">
                 Showing <span className="font-semibold text-white">{getFilteredBookings().length}</span> {bookingFilter} bookings
               </span>
-              <button 
+              <button
                 onClick={() => setBookingFilter('all')}
                 className="text-xs text-white/80 hover:text-white font-medium"
               >
@@ -549,7 +554,7 @@ const AdminDashboard = ({ config }) => {
               </button>
             </div>
           )}
-          
+
           <span className="px-3 py-1 bg-white/20 text-white rounded-full text-sm font-medium inline-block mt-3">
             {bookings.filter(b => b.status === 'adminApproved').length} awaiting artist
           </span>
@@ -587,7 +592,7 @@ const AdminDashboard = ({ config }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
                       <p className="text-gray-400 font-medium">
-                        {bookingFilter === 'all' 
+                        {bookingFilter === 'all'
                           ? 'No bookings yet'
                           : `No ${bookingFilter} bookings found. Try selecting a different filter.`
                         }
@@ -1059,8 +1064,8 @@ const AdminDashboard = ({ config }) => {
                                 </h4>
                                 <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
                                 <p className="text-xs text-gray-400 mt-2">
-                                  {notification.createdAt 
-                                    ? new Date(notification.createdAt).toLocaleString('en-IN') 
+                                  {notification.createdAt
+                                    ? new Date(notification.createdAt).toLocaleString('en-IN')
                                     : notification.time || 'Just now'}
                                 </p>
                               </div>
@@ -1240,23 +1245,21 @@ const AdminDashboard = ({ config }) => {
                       </td>
 
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${
-                          artist.isActive !== false
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${artist.isActive !== false
                             ? 'bg-green-100 text-green-700'
                             : 'bg-red-100 text-red-700'
-                        }`}>
-                          <div className={`w-2 h-2 rounded-full ${
-                            artist.isActive !== false ? 'bg-green-500' : 'bg-red-500'
-                          }`} />
+                          }`}>
+                          <div className={`w-2 h-2 rounded-full ${artist.isActive !== false ? 'bg-green-500' : 'bg-red-500'
+                            }`} />
                           {artist.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </td>
 
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={() => handleViewArtist(artist)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="View Profile"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1334,14 +1337,12 @@ const AdminDashboard = ({ config }) => {
                       {selectedArtist.artistType || 'Professional Artist'}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${
-                        selectedArtist.isActive !== false 
-                          ? 'bg-green-100 text-green-700' 
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${selectedArtist.isActive !== false
+                          ? 'bg-green-100 text-green-700'
                           : 'bg-red-100 text-red-700'
-                      }`}>
-                        <div className={`w-2 h-2 rounded-full ${
-                          selectedArtist.isActive !== false ? 'bg-green-500' : 'bg-red-500'
-                        }`} />
+                        }`}>
+                        <div className={`w-2 h-2 rounded-full ${selectedArtist.isActive !== false ? 'bg-green-500' : 'bg-red-500'
+                          }`} />
                         {selectedArtist.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -1516,14 +1517,12 @@ const AdminDashboard = ({ config }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Status</p>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${
-                        selectedArtist.isActive !== false 
-                          ? 'bg-green-100 text-green-700' 
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${selectedArtist.isActive !== false
+                          ? 'bg-green-100 text-green-700'
                           : 'bg-red-100 text-red-700'
-                      }`}>
-                        <div className={`w-2 h-2 rounded-full ${
-                          selectedArtist.isActive !== false ? 'bg-green-500' : 'bg-red-500'
-                        }`} />
+                        }`}>
+                        <div className={`w-2 h-2 rounded-full ${selectedArtist.isActive !== false ? 'bg-green-500' : 'bg-red-500'
+                          }`} />
                         {selectedArtist.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -1560,7 +1559,7 @@ const AdminDashboard = ({ config }) => {
                           <div className="flex items-center gap-2">
                             <span className="text-pink-600">📷</span>
                             <a href={selectedArtist.socialLinks.instagram} target="_blank" rel="noopener noreferrer"
-                               className="text-purple-600 hover:text-purple-700 text-sm">
+                              className="text-purple-600 hover:text-purple-700 text-sm">
                               Instagram
                             </a>
                           </div>
@@ -1569,7 +1568,7 @@ const AdminDashboard = ({ config }) => {
                           <div className="flex items-center gap-2">
                             <span className="text-red-600">📺</span>
                             <a href={selectedArtist.socialLinks.youtube} target="_blank" rel="noopener noreferrer"
-                               className="text-purple-600 hover:text-purple-700 text-sm">
+                              className="text-purple-600 hover:text-purple-700 text-sm">
                               YouTube
                             </a>
                           </div>
@@ -1578,7 +1577,7 @@ const AdminDashboard = ({ config }) => {
                           <div className="flex items-center gap-2">
                             <span className="text-blue-600">📘</span>
                             <a href={selectedArtist.socialLinks.facebook} target="_blank" rel="noopener noreferrer"
-                               className="text-purple-600 hover:text-purple-700 text-sm">
+                              className="text-purple-600 hover:text-purple-700 text-sm">
                               Facebook
                             </a>
                           </div>
@@ -1587,22 +1586,21 @@ const AdminDashboard = ({ config }) => {
                           <div className="flex items-center gap-2">
                             <span className="text-gray-600">🌐</span>
                             <a href={selectedArtist.socialLinks.website} target="_blank" rel="noopener noreferrer"
-                               className="text-purple-600 hover:text-purple-700 text-sm">
+                              className="text-purple-600 hover:text-purple-700 text-sm">
                               Website
                             </a>
                           </div>
                         )}
-                        {(!selectedArtist.socialLinks?.instagram && !selectedArtist.socialLinks?.youtube && 
+                        {(!selectedArtist.socialLinks?.instagram && !selectedArtist.socialLinks?.youtube &&
                           !selectedArtist.socialLinks?.facebook && !selectedArtist.socialLinks?.website) && (
-                          <span className="text-gray-500 text-sm">No social links provided</span>
-                        )}
+                            <span className="text-gray-500 text-sm">No social links provided</span>
+                          )}
                       </div>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">ID Proof Status</p>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${
-                        selectedArtist.idProof ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${selectedArtist.idProof ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
                         {selectedArtist.idProof ? '✓ Verified' : '⏳ Pending'}
                       </span>
                     </div>

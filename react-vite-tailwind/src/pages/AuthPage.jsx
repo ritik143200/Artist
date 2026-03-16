@@ -276,7 +276,8 @@ const AuthPage = () => {
             name: data.name,
             email: data.email,
             phone: data.phone || '',
-            role: data.role
+            role: data.role,
+            profileImage: data.profileImage || ''
           };
           
           // Update auth context

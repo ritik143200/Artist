@@ -105,10 +105,10 @@ const ArtistCard = ({ artist, config, fullWidth = false, variant = 'default', on
   
   // Improved image handling
   const artistImage = artist.profileImage || artist.image || '👤';
+  
   const isImageURL = typeof artistImage === 'string' && (
     artistImage.startsWith('http') ||
     artistImage.startsWith('/api/') ||
-    artistImage.startsWith('/uploads/') ||
     artistImage.startsWith('blob:') ||
     artistImage.startsWith('data:')
   );

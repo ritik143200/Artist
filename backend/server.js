@@ -4,15 +4,15 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
+// Load environment variables immediately
+dotenv.config();
+
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const artistRoutes = require('./routes/artistRoutes');
 const artistsRoute = require('./routes/artists');
 const bookingRoutes = require('./routes/bookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-
-// Load environment variables
-dotenv.config();
 
 // Connect to database
 const connectDB = require('./config/db');
@@ -30,8 +30,9 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(__dirname, 'uploads');
 const portfolioDir = path.join(uploadsDir, 'portfolio');
 const idProofsDir = path.join(uploadsDir, 'id-proofs');
+const profilesDir = path.join(uploadsDir, 'profiles');
 
-[uploadsDir, portfolioDir, idProofsDir].forEach(dir => {
+[uploadsDir, portfolioDir, idProofsDir, profilesDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }

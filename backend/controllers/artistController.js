@@ -1,43 +1,6 @@
 const Artist = require('../models/Artist');
 const Notification = require('../models/Notification');
-const multer = require('multer');
-const path = require('path');
-const bcrypt = require('bcryptjs');
-const mongoose = require('mongoose');
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    if (file.fieldname === 'idProof') {
-      cb(null, 'uploads/id-proofs/');
-    } else {
-      cb(null, 'uploads/portfolio/');
-    }
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  },
-  fileFilter: function (req, file, cb) {
-    // Accept images and videos
-    const allowedTypes = /jpeg|jpg|png|gif|mp4|avi|mov/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image and video files are allowed!'));
-    }
-  }
-});
+const { upload } = require('../config/cloudinaryConfig');
 
 // Register new artist
 const registerArtist = async (req, res) => {
@@ -73,13 +36,13 @@ const registerArtist = async (req, res) => {
     // Handle portfolio files
     let portfolioFiles = [];
     if (req.files && req.files.portfolio) {
-      portfolioFiles = req.files.portfolio.map(file => `/uploads/portfolio/${file.filename}`);
+      portfolioFiles = req.files.portfolio.map(file => file.path || file.url);
     }
 
     // Handle ID proof
     let idProofFile = '';
     if (req.files && req.files.idProof) {
-      idProofFile = `/uploads/id-proofs/${req.files.idProof[0].filename}`;
+      idProofFile = req.files.idProof[0].path || req.files.idProof[0].url;
     }
 
     // Parse skills if it's a string
@@ -240,6 +203,55 @@ const updateArtist = async (req, res) => {
   }
 };
 
+// Upload artist profile picture
+const uploadProfilePicture = async (req, res) => {
+  try {
+    const artistId = req.params.id;
+    console.log('--- Profile Upload Debug ---');
+    console.log('Artist ID:', artistId);
+    console.log('Headers:', req.headers['content-type']);
+    console.log('File:', req.file);
+    console.log('Body keys:', Object.keys(req.body));
+    
+    if (!req.file) {
+      console.error('No file received in request');
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image'
+      });
+    }
+
+    const profileImagePath = req.file.path || req.file.url;
+
+    const artist = await Artist.findByIdAndUpdate(
+      artistId,
+      { profileImage: profileImagePath },
+      { new: true }
+    );
+
+    if (!artist) {
+      return res.status(404).json({
+        success: false,
+        message: 'Artist not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture uploaded successfully',
+      data: artist
+    });
+  } catch (error) {
+    console.error('Profile picture upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload profile picture',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
 // Delete artist (for admin)
 const deleteArtist = async (req, res) => {
   try {
@@ -327,5 +339,6 @@ module.exports = {
   updateArtist,
   deleteArtist,
   searchArtists,
+  uploadProfilePicture,
   upload
 };

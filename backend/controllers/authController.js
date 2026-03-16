@@ -100,8 +100,11 @@ const loginUser = async (req, res) => {
     res.json({
       _id: user._id,
       name: user.firstName ? `${user.firstName} ${user.lastName}` : user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       role: user.role || 'user',
+      profileImage: user.profileImage,
       token,
       message: 'Login successful'
     });

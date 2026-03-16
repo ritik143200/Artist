@@ -31,27 +31,31 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Sync user state to localStorage
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('loggedInUser', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('loggedInUser');
+    }
+  }, [user]);
+
   // Login function
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('loggedInUser', JSON.stringify(userData));
     console.log('✅ User logged in:', userData);
   };
 
   // Logout function
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('loggedInUser');
     console.log('🚪 User logged out');
   };
 
   // Update user function
   const updateUser = (userData) => {
     setUser(prevUser => ({ ...prevUser, ...userData }));
-    if (user) {
-      localStorage.setItem('loggedInUser', JSON.stringify({ ...user, ...userData }));
-    }
-    console.log('📝 User updated:', { ...user, ...userData });
+    console.log('📝 User updated:', userData);
   };
 
   const value = {
